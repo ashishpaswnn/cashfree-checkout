@@ -1,21 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Cashfree Payment</title>
+  <title>Cashfree Live Payment</title>
 </head>
 <body style="display: flex; justify-content: center; align-items: center; height: 100vh;">
-  <form method="post" action="https://test.cashfree.com/billpay/checkout/post/submit">
+  <form method="post" action="https://www.cashfree.com/checkout/post/submit">
     <input type="hidden" name="appId" value="9997615a4abbf035791b749f4c167999">
-    <input type="hidden" name="orderId" value="ORDER123456">
-    <input type="hidden" name="orderAmount" value="1.00">
+    <input type="hidden" name="orderId" value="ORDER987654">
+    <input type="hidden" name="orderAmount" value="10.00">
     <input type="hidden" name="orderCurrency" value="INR">
-    <input type="hidden" name="customerEmail" value="test@example.com">
+    <input type="hidden" name="customerEmail" value="user@example.com">
     <input type="hidden" name="customerPhone" value="9999999999">
-    <input type="hidden" name="returnUrl" value="https://example.com/success.html">
-    <input type="hidden" name="notifyUrl" value="https://example.com/notify">
-
-    <input type="submit" value="Pay ₹1.00 with Cashfree"
-           style="padding: 15px 30px; font-size: 18px; background-color: #28a745; color: white; border: none; border-radius: 6px;"/>
+    <input type="hidden" name="returnUrl" value="https://yourdomain.com/return.html">
+    <input type="submit" value="Pay ₹10 Now" style="padding: 14px 30px; font-size: 18px; background-color: green; color: white; border: none; border-radius: 5px;">
   </form>
 </body>
 </html>
