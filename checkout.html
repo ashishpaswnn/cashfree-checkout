@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cashfree Payment</title>
+</head>
+<body style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+  <form method="post" action="https://test.cashfree.com/billpay/checkout/post/submit">
+    <input type="hidden" name="appId" value="YOUR_APP_ID_HERE">
+    <input type="hidden" name="orderId" value="ORDER123456">
+    <input type="hidden" name="orderAmount" value="1.00">
+    <input type="hidden" name="orderCurrency" value="INR">
+    <input type="hidden" name="customerEmail" value="test@example.com">
+    <input type="hidden" name="customerPhone" value="9999999999">
+    <input type="hidden" name="returnUrl" value="https://example.com/success.html">
+    <input type="hidden" name="notifyUrl" value="https://example.com/notify">
+
+    <input type="submit" value="Pay ₹1.00 with Cashfree"
+           style="padding: 15px 30px; font-size: 18px; background-color: #28a745; color: white; border: none; border-radius: 6px;"/>
+  </form>
+</body>
+</html>
