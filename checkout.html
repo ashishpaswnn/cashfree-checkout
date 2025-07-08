@@ -1,18 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Cashfree Live Payment</title>
+  <meta charset="UTF-8">
+  <title>📍 Live Location Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      color: #fff;
+      text-align: center;
+      padding: 50px 20px;
+    }
+
+    .container {
+      background-color: rgba(0, 0, 0, 0.4);
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      max-width: 400px;
+      margin: auto;
+    }
+
+    h2 {
+      font-size: 26px;
+      margin-bottom: 20px;
+    }
+
+    .info {
+      font-size: 18px;
+      margin: 10px 0;
+    }
+
+    .status {
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    a#mapLink {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 12px 20px;
+      background-color: #00e676;
+      color: #000;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      transition: all 0.3s ease-in-out;
+    }
+
+    a#mapLink:hover {
+      background-color: #00c853;
+    }
+
+    .loader {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      animation: spin 1s linear infinite;
+      margin: auto;
+      margin-bottom: 15px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+  </style>
 </head>
-<body style="display: flex; justify-content: center; align-items: center; height: 100vh;">
-  <form method="post" action="https://www.cashfree.com/checkout/post/submit">
-    <input type="hidden" name="appId" value="9997615a4abbf035791b749f4c167999">
-    <input type="hidden" name="orderId" value="ORDER987654">
-    <input type="hidden" name="orderAmount" value="10.00">
-    <input type="hidden" name="orderCurrency" value="INR">
-    <input type="hidden" name="customerEmail" value="user@example.com">
-    <input type="hidden" name="customerPhone" value="9999999999">
-    <input type="hidden" name="returnUrl" value="https://yourdomain.com/return.html">
-    <input type="submit" value="Pay ₹10 Now" style="padding: 14px 30px; font-size: 18px; background-color: green; color: white; border: none; border-radius: 5px;">
-  </form>
+<body>
+  <div class="container">
+    <h2>📍 Your Live Location</h2>
+    <div class="loader" id="loader"></div>
+    <p class="status" id="status">Fetching location...</p>
+    <p class="info"><strong>Latitude:</strong> <span id="lat">-</span></p>
+    <p class="info"><strong>Longitude:</strong> <span id="lon">-</span></p>
+    <a id="mapLink" href="#" target="_blank" style="display:none;">View on Google Maps</a>
+  </div>
+
+  <script>
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(position) {
+        const lat = position.coords.latitude.toFixed(6);
+        const lon = position.coords.longitude.toFixed(6);
+        
+        document.getElementById("lat").textContent = lat;
+        document.getElementById("lon").textContent = lon;
+        document.getElementById("mapLink").href = `https://www.google.com/maps?q=${lat},${lon}`;
+        document.getElementById("mapLink").style.display = 'inline-block';
+        document.getElementById("status").textContent = "✅ Location fetched successfully!";
+        document.getElementById("loader").style.display = "none";
+      }, function(error) {
+        document.getElementById("status").textContent = "❌ Failed to fetch location: " + error.message;
+        document.getElementById("loader").style.display = "none";
+      });
+    } else {
+      document.getElementById("status").textContent = "❌ Geolocation is not supported in this browser.";
+      document.getElementById("loader").style.display = "none";
+    }
+  </script>
 </body>
 </html>
