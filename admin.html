@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎬 Filmy4Wap Admin Panel</title>
+  <title>🎬 Admin Panel - Upload Movies</title>
   <style>
     body {
       margin: 0;
@@ -147,8 +147,10 @@
       const size = document.getElementById('size').value;
       const quality = document.getElementById('quality').value;
       const category = document.getElementById('category').value;
-      const imageFile = document.getElementById('image').files[0];
-      const videoFile = document.getElementById('video').files[0];
+      const imageInput = document.getElementById('image');
+      const videoInput = document.getElementById('video');
+      const imageFile = imageInput.files[0];
+      const videoFile = videoInput.files[0];
 
       if (!title || !imageFile || !videoFile) {
         alert("❌ Please fill all fields and select files.");
@@ -174,8 +176,16 @@
           videoUrl
         });
 
-        document.querySelectorAll('input').forEach(e => e.value = '');
+        // Clear inputs
+        document.getElementById('title').value = '';
+        document.getElementById('size').value = '';
+        document.getElementById('quality').value = '';
+        document.getElementById('category').selectedIndex = 0;
+        imageInput.value = '';
+        videoInput.value = '';
+
         showDialog();
+
       } catch (err) {
         alert("❌ Upload failed: " + err.message);
       }
