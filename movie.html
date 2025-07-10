@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎥 Watch Movie</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: #000;
+      color: #fff;
+    }
+    .container {
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #00ffc8;
+    }
+    .video-container {
+      position: relative;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+      margin-bottom: 20px;
+    }
+    video {
+      width: 100%;
+      max-height: 70vh;
+      display: block;
+    }
+    .details {
+      background: #111;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .details p {
+      margin: 8px 0;
+      font-size: 15px;
+    }
+    .actions {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .actions a {
+      padding: 12px 20px;
+      background: #00c853;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      margin: 10px 5px 0;
+      text-align: center;
+      flex: 1 1 30%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 id="movieTitle">Loading...</h1>
+    <div class="video-container">
+      <video id="videoPlayer" controls autoplay></video>
+    </div>
+    <div class="details">
+      <p><strong>Size:</strong> <span id="movieSize"></span></p>
+      <p><strong>Quality:</strong> <span id="movieQuality"></span></p>
+      <p><strong>Category:</strong> <span id="movieCategory"></span></p>
+    </div>
+    <div class="actions">
+      <a href="#" id="prevBtn">⬅ Previous</a>
+      <a href="#" id="downloadBtn">⬇ Download</a>
+      <a href="#" id="nextBtn">Next ➡</a>
+    </div>
+    <div class="actions">
+      <a href="index.html">🏠 Back to Home</a>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAOJ4Ye2PmNA9DykjWX4hvFYhjKg0pZuQM",
+      authDomain: "new-wala-app.firebaseapp.com",
+      databaseURL: "https://new-wala-app-default-rtdb.firebaseio.com",
+      projectId: "new-wala-app",
+      storageBucket: "new-wala-app.appspot.com",
+      messagingSenderId: "443237566876",
+      appId: "1:443237566876:web:your_app_id_here"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const title = decodeURIComponent(urlParams.get('id'));
+
+    let allMovies = [];
+    let currentIndex = -1;
+
+    db.ref('/movies').once('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        allMovies = Object.values(data);
+        currentIndex = allMovies.findIndex(m => m.title === title);
+        if (currentIndex >= 0) renderMovie(allMovies[currentIndex]);
+      }
+    });
+
+    function renderMovie(movie) {
+      document.getElementById('movieTitle').innerText = movie.title;
+      document.getElementById('movieSize').innerText = movie.size;
+      document.getElementById('movieQuality').innerText = movie.quality;
+      document.getElementById('movieCategory').innerText = movie.category;
+      document.getElementById('videoPlayer').src = movie.videoUrl;
+      document.getElementById('downloadBtn').href = movie.videoUrl;
+      document.getElementById('downloadBtn').setAttribute('download', movie.title + ".mp4");
+    }
+
+    document.getElementById('prevBtn').onclick = () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderMovie(allMovies[currentIndex]);
+      }
+    };
+
+    document.getElementById('nextBtn').onclick = () => {
+      if (currentIndex < allMovies.length - 1) {
+        currentIndex++;
+        renderMovie(allMovies[currentIndex]);
+      }
+    };
+  </script>
+</body>
+</html>
