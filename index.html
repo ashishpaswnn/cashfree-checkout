@@ -1,123 +1,107 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎬 Admin Panel - Upload Movies</title>
+  <title>🎬 Filmy4Wap - Latest Movies</title>
   <style>
     body {
-      margin: 0;
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(to right, #1f1c2c, #928dab);
+      margin: 0;
+      background: linear-gradient(to right, #001f3f, #0074D9);
       color: #fff;
+      padding-bottom: 70px;
     }
     header {
-      background: #000;
-      padding: 20px;
       text-align: center;
-      font-size: 1.8em;
+      padding: 20px;
+      background: #001f3f;
+      color: #7FDBFF;
+      font-size: 1.5em;
       font-weight: bold;
-      color: #00ffc8;
     }
-    main {
-      max-width: 700px;
-      margin: 0 auto;
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 20px;
       padding: 20px;
     }
-    input, select, button {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 10px;
-      font-size: 15px;
-    }
-    button {
-      background: #00c853;
-      color: #fff;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .movie-list {
-      margin-top: 40px;
-    }
-    .movie-card {
-      display: flex;
+    .card {
       background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    }
-    .movie-card img {
-      width: 90px;
-      height: 70px;
-      border-radius: 8px;
-      object-fit: cover;
-      margin-right: 15px;
-    }
-    .movie-details {
-      flex: 1;
-    }
-    #dialog {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.7);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 999;
-    }
-    .dialog-box {
-      background: #222;
-      padding: 20px 30px;
       border-radius: 15px;
-      text-align: center;
-      color: #00ffc8;
-      font-weight: bold;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+      transition: transform 0.3s;
     }
-    .dialog-box button {
-      margin-top: 20px;
-      background: #00c853;
+    .card:hover {
+      transform: scale(1.05);
+    }
+    .card img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+    }
+    .card-content {
+      padding: 15px;
+    }
+    .card h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+    .card p {
+      font-size: 13px;
+      margin-top: 8px;
+      color: #cceeff;
+    }
+    .card a {
+      display: inline-block;
+      margin-top: 10px;
+      color: #7FDBFF;
+      text-decoration: underline;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      font-size: 18px;
+      color: #7FDBFF;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #001f3f;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.5);
+    }
+    .bottom-nav .nav-item {
+      color: #fff;
+      text-align: center;
+      transition: transform 0.3s, font-size 0.3s;
+      font-size: 14px;
+    }
+    .bottom-nav .nav-item.active {
+      transform: scale(1.3);
+      font-size: 16px;
+      color: #00ffff;
     }
   </style>
 </head>
 <body>
-  <header>🎬 Admin Panel - Upload Movie</header>
-  <main>
-    <input type="text" id="title" placeholder="🎬 Movie Title">
-    <input type="text" id="size" placeholder="💾 Size (e.g. 700MB)">
-    <input type="text" id="quality" placeholder="🎥 Quality (e.g. 1080p)">
-    <select id="category">
-      <option value="Bollywood">Bollywood</option>
-      <option value="South">South</option>
-      <option value="Web Series">Web Series</option>
-      <option value="Dual Audio">Dual Audio</option>
-    </select>
-    <input type="file" id="image" accept="image/*">
-    <input type="file" id="video" accept="video/*">
-    <button onclick="uploadMovie()">⬆ Upload</button>
+  <header>🎬 Filmy4Wap - Latest Movies</header>
+  <div id="movieGrid" class="grid"></div>
+  <div id="loading" class="loading">Loading movies...</div>
 
-    <div class="movie-list" id="movieList">
-      <h2>📋 Uploaded Movies</h2>
-    </div>
-  </main>
-
-  <div id="dialog">
-    <div class="dialog-box">
-      ✅ Movie uploaded successfully!
-      <br>
-      <button onclick="hideDialog()">OK</button>
-    </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="setActive(this)">Home</div>
+    <div class="nav-item active" onclick="setActive(this)">Movies</div>
+    <div class="nav-item" onclick="setActive(this)">Profile</div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
   <script>
     const firebaseConfig = {
@@ -132,85 +116,37 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const storage = firebase.storage();
 
-    function showDialog() {
-      document.getElementById('dialog').style.display = 'flex';
-    }
+    const movieGrid = document.getElementById('movieGrid');
+    const loading = document.getElementById('loading');
 
-    function hideDialog() {
-      document.getElementById('dialog').style.display = 'none';
-    }
-
-    async function uploadMovie() {
-      const title = document.getElementById('title').value;
-      const size = document.getElementById('size').value;
-      const quality = document.getElementById('quality').value;
-      const category = document.getElementById('category').value;
-      const imageInput = document.getElementById('image');
-      const videoInput = document.getElementById('video');
-      const imageFile = imageInput.files[0];
-      const videoFile = videoInput.files[0];
-
-      if (!title || !imageFile || !videoFile) {
-        alert("❌ Please fill all fields and select files.");
-        return;
-      }
-
-      try {
-        const imageRef = storage.ref('images/' + Date.now() + '_' + imageFile.name);
-        const videoRef = storage.ref('videos/' + Date.now() + '_' + videoFile.name);
-
-        await imageRef.put(imageFile);
-        const imageUrl = await imageRef.getDownloadURL();
-
-        await videoRef.put(videoFile);
-        const videoUrl = await videoRef.getDownloadURL();
-
-        await db.ref('/movies').push({
-          title,
-          size,
-          quality,
-          category,
-          imageUrl,
-          videoUrl
-        });
-
-        // Clear inputs
-        document.getElementById('title').value = '';
-        document.getElementById('size').value = '';
-        document.getElementById('quality').value = '';
-        document.getElementById('category').selectedIndex = 0;
-        imageInput.value = '';
-        videoInput.value = '';
-
-        showDialog();
-
-      } catch (err) {
-        alert("❌ Upload failed: " + err.message);
-      }
-    }
-
-    db.ref('/movies').on('value', (snapshot) => {
+    db.ref('/movies').once('value', (snapshot) => {
       const data = snapshot.val();
-      const movieList = document.getElementById('movieList');
-      movieList.innerHTML = '<h2>📋 Uploaded Movies</h2>';
+      movieGrid.innerHTML = '';
       if (data) {
-        Object.values(data).forEach((movie) => {
-          movieList.innerHTML += `
-            <div class="movie-card">
-              <img src="${movie.imageUrl}" alt="${movie.title}">
-              <div class="movie-details">
-                <h3>${movie.title}</h3>
-                <p>🎞 ${movie.quality} | 💾 ${movie.size} | 🏷 ${movie.category}</p>
-              </div>
+        Object.values(data).forEach(movie => {
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `
+            <img src="${movie.imageUrl}" alt="${movie.title}" />
+            <div class="card-content">
+              <h3>${movie.title}</h3>
+              <p>🎞 ${movie.quality} | 💾 ${movie.size} | 🏷 ${movie.category}</p>
+              <a href="movie.html?id=${encodeURIComponent(movie.title)}">Watch / Download</a>
             </div>
           `;
+          movieGrid.appendChild(div);
         });
+        loading.style.display = 'none';
       } else {
-        movieList.innerHTML += '<p>No movies uploaded yet.</p>';
+        loading.innerText = 'No movies found.';
       }
     });
+
+    function setActive(el) {
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      el.classList.add('active');
+    }
   </script>
 </body>
 </html>
