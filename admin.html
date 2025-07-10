@@ -1,0 +1,187 @@
+<!-- ✅ Stylish Admin Panel with Realtime Uploaded List -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎬 Movie Uploader Admin Panel</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #00e6e6;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    input[type="text"], input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      margin-top: 5px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #00c853;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    #status {
+      margin-top: 15px;
+      text-align: center;
+    }
+    .movie-list {
+      margin-top: 30px;
+    }
+    .movie-card {
+      background: #1c1c1c;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    .movie-card img {
+      width: 100px;
+      height: auto;
+      border-radius: 6px;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+    .movie-details {
+      display: inline-block;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🎬 Movie Uploader Admin Panel</h1>
+
+<div class="form-group">
+  <label>Title</label>
+  <input type="text" id="title" placeholder="Movie Title">
+</div>
+<div class="form-group">
+  <label>Size</label>
+  <input type="text" id="size" placeholder="e.g. 480MB">
+</div>
+<div class="form-group">
+  <label>Quality</label>
+  <input type="text" id="quality" placeholder="e.g. 720p">
+</div>
+<div class="form-group">
+  <label>Thumbnail Image</label>
+  <input type="file" id="image" accept="image/*">
+</div>
+<div class="form-group">
+  <label>Video File</label>
+  <input type="file" id="video" accept="video/*">
+</div>
+
+<button onclick="uploadMovie()">⬆ Upload Movie</button>
+<p id="status"></p>
+
+<div class="movie-list" id="movieList">
+  <h2>📋 Uploaded Movies</h2>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const storage = firebase.storage();
+
+  async function uploadMovie() {
+    const title = document.getElementById('title').value;
+    const size = document.getElementById('size').value;
+    const quality = document.getElementById('quality').value;
+    const imageFile = document.getElementById('image').files[0];
+    const videoFile = document.getElementById('video').files[0];
+    const status = document.getElementById('status');
+
+    if (!title || !imageFile || !videoFile) {
+      status.textContent = "Please fill all fields and select files.";
+      return;
+    }
+
+    status.textContent = "Uploading...";
+
+    try {
+      const imageRef = storage.ref('images/' + imageFile.name);
+      const videoRef = storage.ref('videos/' + videoFile.name);
+
+      const imageSnap = await imageRef.put(imageFile);
+      const videoSnap = await videoRef.put(videoFile);
+
+      const imageUrl = await imageSnap.ref.getDownloadURL();
+      const videoUrl = await videoSnap.ref.getDownloadURL();
+
+      const newMovieRef = db.ref('movies').push();
+      await newMovieRef.set({
+        title,
+        size,
+        quality,
+        imageUrl,
+        videoUrl
+      });
+
+      status.textContent = "✅ Movie uploaded successfully!";
+      document.getElementById('title').value = "";
+      document.getElementById('size').value = "";
+      document.getElementById('quality').value = "";
+      document.getElementById('image').value = null;
+      document.getElementById('video').value = null;
+    } catch (err) {
+      console.error(err);
+      status.textContent = "❌ Error uploading movie.";
+    }
+  }
+
+  // 🔁 Realtime fetch and display movies below form
+  const movieList = document.getElementById('movieList');
+  db.ref('movies').on('value', (snapshot) => {
+    const data = snapshot.val();
+    movieList.innerHTML = '<h2>📋 Uploaded Movies</h2>';
+    for (let key in data) {
+      const movie = data[key];
+      const html = `
+        <div class="movie-card">
+          <img src="${movie.imageUrl}" alt="${movie.title}" />
+          <div class="movie-details">
+            <h3>${movie.title}</h3>
+            <p>Size: ${movie.size} | Quality: ${movie.quality}</p>
+          </div>
+        </div>
+      `;
+      movieList.innerHTML += html;
+    }
+  });
+</script>
+
+</body>
+</html>
