@@ -19,7 +19,7 @@
       margin: 0;
       color: #00ffff;
     }
-    .form-container, .login-container {
+    .form-container {
       padding: 20px;
       background: #111;
       margin: 20px;
@@ -111,20 +111,30 @@
       margin-bottom: 10px;
       border-radius: 8px;
     }
+    #progressDialog {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      display: none;
+    }
+    #progressDialog .box {
+      background: #222;
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      color: #00ffff;
+    }
   </style>
 </head>
 <body>
   <h1>🎬 Admin Upload Panel</h1>
 
-  <div id="loginBox" class="login-container">
-    <input type="email" id="email" placeholder="Admin Email">
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="login()">Login</button>
-  </div>
-
-  <div id="adminPanel" style="display:none">
+  <div id="adminPanel">
     <div class="form-container">
-      <button style="background:#ff3d00; margin-bottom:20px;" onclick="logout()">Logout</button>
       <select id="category">
         <option value="movies">Movies</option>
         <option value="webseries">Web Series</option>
@@ -144,8 +154,14 @@
 
   <div id="toast">✅ Movie Uploaded Successfully!</div>
 
+  <div id="progressDialog">
+    <div class="box">
+      <h3>Uploading...</h3>
+      <p id="progressText">0%</p>
+    </div>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
   <script>
@@ -161,7 +177,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const storage = firebase.storage();
-    const auth = firebase.auth();
 
     let editKey = null;
 
@@ -172,28 +187,6 @@
       setTimeout(() => {
         toast.className = toast.className.replace("show", "");
       }, 3000);
-    }
-
-    function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-          document.getElementById("loginBox").style.display = "none";
-          document.getElementById("adminPanel").style.display = "block";
-          loadMovies();
-        })
-        .catch(() => {
-          showToast("❌ Login failed");
-        });
-    }
-
-    function logout() {
-      auth.signOut().then(() => {
-        document.getElementById("loginBox").style.display = "block";
-        document.getElementById("adminPanel").style.display = "none";
-        showToast("🔓 Logged out");
-      });
     }
 
     function previewImage(event) {
@@ -210,25 +203,29 @@
       const videoFile = document.getElementById("videoFile").files[0];
       const category = document.getElementById("category").value;
 
-      if (!title) return showToast("⚠️ Title is required");
+      if (!title || !imageFile || !videoFile) return showToast("⚠️ All fields required");
 
-      if (editKey) {
-        db.ref(`/${category}/${editKey}`).update({ title, quality, size }, () => {
-          showToast("✅ Movie Updated");
-          editKey = null;
-          loadMovies();
-        });
-        return;
-      }
-
-      if (!imageFile || !videoFile) return showToast("⚠️ Please select files");
+      document.getElementById("progressDialog").style.display = "flex";
 
       const imageRef = storage.ref(`images/${imageFile.name}`);
       const videoRef = storage.ref(`videos/${videoFile.name}`);
 
+      let imageUpload = imageRef.put(imageFile);
+      let videoUpload = videoRef.put(videoFile);
+
+      imageUpload.on('state_changed', (snapshot) => {
+        const percent = Math.floor((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+        document.getElementById("progressText").innerText = `Image: ${percent}%`;
+      });
+
+      videoUpload.on('state_changed', (snapshot) => {
+        const percent = Math.floor((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+        document.getElementById("progressText").innerText = `Video: ${percent}%`;
+      });
+
       Promise.all([
-        imageRef.put(imageFile),
-        videoRef.put(videoFile)
+        imageUpload,
+        videoUpload
       ]).then(async ([imageSnap, videoSnap]) => {
         const imageUrl = await imageSnap.ref.getDownloadURL();
         const videoUrl = await videoSnap.ref.getDownloadURL();
@@ -236,6 +233,7 @@
         const data = { title, quality, size, imageUrl, videoUrl, category };
         db.ref(`/${category}`).push(data, () => {
           showToast("✅ Movie Uploaded Successfully!");
+          document.getElementById("progressDialog").style.display = "none";
           loadMovies();
         });
       });
@@ -287,6 +285,7 @@
     }
 
     document.getElementById("category").addEventListener("change", loadMovies);
+    window.onload = loadMovies;
   </script>
 </body>
 </html>
