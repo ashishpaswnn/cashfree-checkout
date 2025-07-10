@@ -20,6 +20,21 @@
       font-size: 1.5em;
       font-weight: bold;
     }
+    .search-box {
+      margin: 10px 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .search-box input {
+      width: 100%;
+      max-width: 500px;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -88,12 +103,34 @@
       font-size: 16px;
       color: #00ffff;
     }
+    .ads-blocked {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #000c;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      font-size: 18px;
+      z-index: 9999;
+      flex-direction: column;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
   <header>🎬 Filmy4Wap - Media Library</header>
+  <div id="top-banner-ad" style="width:100%;text-align:center;margin:10px 0;">
+    <!-- Monetag Ad Script Paste Here -->
+  </div>
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search movies..." oninput="filterMovies()" />
+  </div>
   <div id="movieGrid" class="grid"></div>
   <div id="loading" class="loading">Loading movies...</div>
+  <div id="adblockMessage" class="ads-blocked" style="display:none;">
+    ⚠️ Please disable Ad Blocker to access this website.
+  </div>
 
   <div class="bottom-nav">
     <div class="nav-item active" onclick="setActive(this); loadContent('movies')">Movies</div>
@@ -101,9 +138,22 @@
     <div class="nav-item" onclick="setActive(this); loadContent('adult')">18+</div>
   </div>
 
+  <div id="bottom-sticky-ad" style="position:fixed;bottom:60px;width:100%;text-align:center;z-index:9999;">
+    <!-- Monetag Ad Script Paste Here -->
+    <script type="text/javascript">
+	atOptions = {
+		'key' : '27286c3a78b64fa375176d9f3cac08ec',
+		'format' : 'iframe',
+		'height' : 50,
+		'width' : 320,
+		'params' : {}
+	};
+</script>
+<script type="text/javascript" src="//www.highperformanceformat.com/27286c3a78b64fa375176d9f3cac08ec/invoke.js"></script>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAOJ4Ye2PmNA9DykjWX4hvFYhjKg0pZuQM",
@@ -116,35 +166,65 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
     const movieGrid = document.getElementById('movieGrid');
     const loading = document.getElementById('loading');
+    let allMovies = [];
 
     function loadContent(category) {
       movieGrid.innerHTML = '';
       loading.style.display = 'block';
       db.ref('/' + category).once('value', (snapshot) => {
         const data = snapshot.val();
-        movieGrid.innerHTML = '';
-        if (data) {
-          Object.values(data).forEach(movie => {
-            const div = document.createElement('div');
-            div.className = 'card';
-            div.innerHTML = `
-              <img src="${movie.imageUrl}" alt="${movie.title}" />
-              <div class="card-content">
-                <h3>${movie.title}</h3>
-                <p>${movie.quality} | ${movie.size}</p>
-                <a href="movie.html?id=${encodeURIComponent(movie.title)}">Watch / Download</a>
-              </div>
-            `;
-            movieGrid.appendChild(div);
-          });
-        } else {
-          movieGrid.innerHTML = '<div class="loading">No content found.</div>';
-        }
+        allMovies = data ? Object.values(data) : [];
+        renderMovies(allMovies);
         loading.style.display = 'none';
       });
+    }
+
+    function renderMovies(movies) {
+      movieGrid.innerHTML = '';
+      if (movies.length === 0) {
+        movieGrid.innerHTML = '<div class="loading">No content found.</div>';
+        return;
+      }
+      movies.forEach((movie, index) => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+          <img src="${movie.imageUrl}" alt="${movie.title}" />
+          <div class="card-content">
+            <h3>${movie.title}</h3>
+            <p>${movie.quality} | ${movie.size}</p>
+            <a href="movie.html?id=${encodeURIComponent(movie.title)}">Watch / Download</a>
+          </div>
+        `;
+        movieGrid.appendChild(div);
+
+        if ((index + 1) % 4 === 0) {
+          const ad = document.createElement('div');
+          ad.innerHTML = `
+            <div style="text-align:center;margin:10px 0;">
+              <script type="text/javascript">
+	atOptions = {
+		'key' : '27286c3a78b64fa375176d9f3cac08ec',
+		'format' : 'iframe',
+		'height' : 50,
+		'width' : 320,
+		'params' : {}
+	};
+</script>
+<script type="text/javascript" src="//www.highperformanceformat.com/27286c3a78b64fa375176d9f3cac08ec/invoke.js"></script>
+            </div>
+          `;
+          movieGrid.appendChild(ad);
+        }
+      });
+    }
+
+    function filterMovies() {
+      const value = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = allMovies.filter(movie => movie.title.toLowerCase().includes(value));
+      renderMovies(filtered);
     }
 
     function setActive(el) {
@@ -152,7 +232,19 @@
       el.classList.add('active');
     }
 
-    // Default load
+    setTimeout(() => {
+      const ad = document.createElement('div');
+      ad.className = 'adsbox';
+      ad.style.height = '1px';
+      document.body.appendChild(ad);
+      setTimeout(() => {
+        if (ad.offsetHeight === 0) {
+          document.getElementById('adblockMessage').style.display = 'flex';
+        }
+        ad.remove();
+      }, 100);
+    }, 100);
+
     window.onload = () => loadContent('movies');
   </script>
 </body>
