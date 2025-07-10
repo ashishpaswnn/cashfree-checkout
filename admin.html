@@ -105,6 +105,12 @@
       from { bottom: 30px; opacity: 1; }
       to { bottom: 0; opacity: 0; }
     }
+    #preview {
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 10px;
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
@@ -118,6 +124,7 @@
 
   <div id="adminPanel" style="display:none">
     <div class="form-container">
+      <button style="background:#ff3d00; margin-bottom:20px;" onclick="logout()">Logout</button>
       <select id="category">
         <option value="movies">Movies</option>
         <option value="webseries">Web Series</option>
@@ -126,7 +133,8 @@
       <input type="text" id="title" placeholder="Title">
       <input type="text" id="quality" placeholder="Quality">
       <input type="text" id="size" placeholder="Size">
-      <input type="file" id="imageFile" accept="image/*">
+      <input type="file" id="imageFile" accept="image/*" onchange="previewImage(event)">
+      <img id="preview" style="display:none">
       <input type="file" id="videoFile" accept="video/*">
       <button onclick="uploadMovie()">Upload</button>
     </div>
@@ -178,6 +186,20 @@
         .catch(() => {
           showToast("❌ Login failed");
         });
+    }
+
+    function logout() {
+      auth.signOut().then(() => {
+        document.getElementById("loginBox").style.display = "block";
+        document.getElementById("adminPanel").style.display = "none";
+        showToast("🔓 Logged out");
+      });
+    }
+
+    function previewImage(event) {
+      const preview = document.getElementById("preview");
+      preview.src = URL.createObjectURL(event.target.files[0]);
+      preview.style.display = "block";
     }
 
     function uploadMovie() {
