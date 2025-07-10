@@ -1,1 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>1Filmy4Wap Clone</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header>
+    <h1>1Filmy4Wap Clone</h1>
+    <input type="text" id="searchBox" placeholder="Search movies...">
+  </header>
+  <main>
+    <div class="movie-grid" id="movieGrid">
+      <a href="movies/movie1.html" class="movie-card">
+        <img src="assets/images/pathaan.jpg" alt="Pathaan">
+        <h2>Pathaan (2023)</h2>
+        <p>Size: 480MB | Quality: 720p</p>
+      </a>
+      <a href="movies/movie2.html" class="movie-card">
+        <img src="assets/images/tiger3.jpg" alt="Tiger 3">
+        <h2>Tiger 3 (2023)</h2>
+        <p>Size: 500MB | Quality: 1080p</p>
+      </a>
+    </div>
+  </main>
 
+  <script>
+    const searchBox = document.getElementById('searchBox');
+    const movieGrid = document.getElementById('movieGrid');
+
+    searchBox.addEventListener('keyup', () => {
+      const keyword = searchBox.value.toLowerCase();
+      const cards = movieGrid.querySelectorAll('.movie-card');
+
+      cards.forEach(card => {
+        const title = card.querySelector('h2').textContent.toLowerCase();
+        card.style.display = title.includes(keyword) ? 'block' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>
