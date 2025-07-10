@@ -1,4 +1,4 @@
-<!-- ✅ Stylish Admin Panel with Realtime Uploaded List -->
+<!-- ✅ Admin Panel with Category Dropdown & Realtime Movie List -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,90 +7,89 @@
   <title>🎬 Movie Uploader Admin Panel</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #111;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #000046, #1cb5e0);
       color: #fff;
       margin: 0;
       padding: 20px;
     }
     h1 {
       text-align: center;
-      color: #00e6e6;
+      color: #00ffe0;
     }
-    .form-group {
-      margin-bottom: 15px;
+    label {
+      font-weight: bold;
     }
-    input[type="text"], input[type="file"] {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      margin-top: 5px;
-    }
-    button {
+    input, select, button {
       width: 100%;
       padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+    }
+    button {
       background: #00c853;
       color: white;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
       cursor: pointer;
-      margin-top: 10px;
-    }
-    #status {
-      margin-top: 15px;
-      text-align: center;
+      font-weight: bold;
     }
     .movie-list {
       margin-top: 30px;
     }
     .movie-card {
-      background: #1c1c1c;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      background: rgba(255, 255, 255, 0.1);
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
     .movie-card img {
       width: 100px;
-      height: auto;
-      border-radius: 6px;
-      margin-right: 10px;
-      vertical-align: middle;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-right: 15px;
     }
     .movie-details {
-      display: inline-block;
-      vertical-align: middle;
+      flex: 1;
+    }
+    #status {
+      text-align: center;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
 
-<h1>🎬 Movie Uploader Admin Panel</h1>
+<h1>📤 Upload New Movie</h1>
 
-<div class="form-group">
-  <label>Title</label>
-  <input type="text" id="title" placeholder="Movie Title">
-</div>
-<div class="form-group">
-  <label>Size</label>
-  <input type="text" id="size" placeholder="e.g. 480MB">
-</div>
-<div class="form-group">
-  <label>Quality</label>
-  <input type="text" id="quality" placeholder="e.g. 720p">
-</div>
-<div class="form-group">
-  <label>Thumbnail Image</label>
-  <input type="file" id="image" accept="image/*">
-</div>
-<div class="form-group">
-  <label>Video File</label>
-  <input type="file" id="video" accept="video/*">
-</div>
+<label>Title</label>
+<input type="text" id="title" placeholder="Enter movie title">
 
-<button onclick="uploadMovie()">⬆ Upload Movie</button>
+<label>Size</label>
+<input type="text" id="size" placeholder="e.g. 480MB">
+
+<label>Quality</label>
+<input type="text" id="quality" placeholder="e.g. 720p">
+
+<label>Category</label>
+<select id="category">
+  <option value="Bollywood">Bollywood</option>
+  <option value="South">South</option>
+  <option value="Web Series">Web Series</option>
+  <option value="Dual Audio">Dual Audio</option>
+</select>
+
+<label>Thumbnail Image</label>
+<input type="file" id="image" accept="image/*">
+
+<label>Video File</label>
+<input type="file" id="video" accept="video/*">
+
+<button onclick="uploadMovie()">⬆ Upload</button>
 <p id="status"></p>
 
 <div class="movie-list" id="movieList">
@@ -111,7 +110,7 @@
     messagingSenderId: "443237566876",
     appId: "new-wala-app"
   };
-  
+
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const storage = firebase.storage();
@@ -120,6 +119,7 @@
     const title = document.getElementById('title').value;
     const size = document.getElementById('size').value;
     const quality = document.getElementById('quality').value;
+    const category = document.getElementById('category').value;
     const imageFile = document.getElementById('image').files[0];
     const videoFile = document.getElementById('video').files[0];
     const status = document.getElementById('status');
@@ -146,23 +146,20 @@
         title,
         size,
         quality,
+        category,
         imageUrl,
         videoUrl
       });
 
       status.textContent = "✅ Movie uploaded successfully!";
-      document.getElementById('title').value = "";
-      document.getElementById('size').value = "";
-      document.getElementById('quality').value = "";
-      document.getElementById('image').value = null;
-      document.getElementById('video').value = null;
+      document.querySelectorAll('input').forEach(e => e.value = '');
     } catch (err) {
       console.error(err);
       status.textContent = "❌ Error uploading movie.";
     }
   }
 
-  // 🔁 Realtime fetch and display movies below form
+  // 🔁 Realtime fetch and display movies
   const movieList = document.getElementById('movieList');
   db.ref('movies').on('value', (snapshot) => {
     const data = snapshot.val();
@@ -174,7 +171,7 @@
           <img src="${movie.imageUrl}" alt="${movie.title}" />
           <div class="movie-details">
             <h3>${movie.title}</h3>
-            <p>Size: ${movie.size} | Quality: ${movie.quality}</p>
+            <p>🎞 ${movie.quality} | 💾 ${movie.size} | 🏷 ${movie.category}</p>
           </div>
         </div>
       `;
