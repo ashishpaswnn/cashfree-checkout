@@ -1,4 +1,4 @@
-<!-- ✅ Final Admin Panel - With Category, Firebase Upload (Working Version) -->
+<!-- ✅ Final Admin Panel with Working Realtime DB Push -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -55,6 +55,21 @@
     #status {
       text-align: center;
       font-weight: bold;
+      margin-top: 10px;
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #222;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 20px;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      display: none;
+      z-index: 1000;
     }
   </style>
 </head>
@@ -79,16 +94,17 @@
 <div class="movie-list" id="movieList">
   <h2>📋 Uploaded Movies</h2>
 </div>
+<div id="toast" class="toast"></div>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyAOJ4Ye2PmNA9DykjWX4hvFYhjKg0pZuQM",
     authDomain: "new-wala-app.firebaseapp.com",
-    databaseURL: "https://new-wala-app.firebaseio.com",
+    databaseURL: "https://new-wala-app-default-rtdb.firebaseio.com",
     projectId: "new-wala-app",
     storageBucket: "new-wala-app.appspot.com",
     messagingSenderId: "443237566876",
@@ -98,6 +114,13 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const storage = firebase.storage();
+
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.innerText = message;
+    toast.style.display = 'block';
+    setTimeout(() => toast.style.display = 'none', 4000);
+  }
 
   async function uploadMovie() {
     const title = document.getElementById('title').value;
@@ -114,55 +137,70 @@
     }
 
     status.textContent = "Uploading image...";
+    showToast("Uploading image...");
 
     try {
       const imageRef = storage.ref('images/' + Date.now() + '_' + imageFile.name);
       const videoRef = storage.ref('videos/' + Date.now() + '_' + videoFile.name);
 
-      // Upload Image
       const imgTask = imageRef.put(imageFile);
       await new Promise((resolve, reject) => {
-        imgTask.on('state_changed', null, reject, resolve);
+        imgTask.on('state_changed', (snap) => {
+          const percent = (snap.bytesTransferred / snap.totalBytes) * 100;
+          showToast(`🖼 Image uploading: ${percent.toFixed(0)}%`);
+        }, reject, resolve);
       });
       const imageUrl = await imageRef.getDownloadURL();
 
       status.textContent = "Uploading video...";
+      showToast("Uploading video...");
+
       const vidTask = videoRef.put(videoFile);
       await new Promise((resolve, reject) => {
         vidTask.on('state_changed', (snap) => {
           const percent = (snap.bytesTransferred / snap.totalBytes) * 100;
-          status.textContent = `Uploading video: ${percent.toFixed(0)}%`;
+          showToast(`🎬 Video uploading: ${percent.toFixed(0)}%`);
         }, reject, resolve);
       });
       const videoUrl = await videoRef.getDownloadURL();
 
-      await db.ref('movies').push({
-        title, size, quality, category, imageUrl, videoUrl
+      await db.ref('/movies').push({
+        title: title,
+        size: size,
+        quality: quality,
+        category: category,
+        imageUrl: imageUrl,
+        videoUrl: videoUrl
       });
 
       status.textContent = "✅ Movie uploaded successfully!";
+      showToast("✅ Movie uploaded successfully!");
       document.querySelectorAll('input').forEach(e => e.value = '');
     } catch (err) {
       console.error(err);
       status.textContent = "❌ Error: " + err.message;
+      showToast("❌ Upload failed");
     }
   }
 
-  db.ref('movies').on('value', (snapshot) => {
+  db.ref('/movies').on('value', (snapshot) => {
     const data = snapshot.val();
     const movieList = document.getElementById('movieList');
     movieList.innerHTML = '<h2>📋 Uploaded Movies</h2>';
-    for (let key in data) {
-      const movie = data[key];
-      movieList.innerHTML += `
-        <div class="movie-card">
-          <img src="${movie.imageUrl}" alt="${movie.title}">
-          <div class="movie-details">
-            <h3>${movie.title}</h3>
-            <p>🎞 ${movie.quality} | 💾 ${movie.size} | 🏷 ${movie.category}</p>
+    if (data) {
+      Object.values(data).forEach((movie) => {
+        movieList.innerHTML += `
+          <div class="movie-card">
+            <img src="${movie.imageUrl}" alt="${movie.title}">
+            <div class="movie-details">
+              <h3>${movie.title}</h3>
+              <p>🎞 ${movie.quality} | 💾 ${movie.size} | 🏷 ${movie.category}</p>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      });
+    } else {
+      movieList.innerHTML += '<p>No movies uploaded yet.</p>';
     }
   });
 </script>
