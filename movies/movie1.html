@@ -1,23 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pathaan (2023)</title>
-  <link rel="stylesheet" href="../css/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎥 Watch Movie</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: #000;
+      color: #fff;
+    }
+    .container {
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #00ffc8;
+    }
+    video {
+      width: 100%;
+      max-height: 70vh;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    .details {
+      background: #111;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .details p {
+      margin: 8px 0;
+      font-size: 15px;
+    }
+    .back {
+      margin-top: 20px;
+      display: inline-block;
+      padding: 10px 20px;
+      background: #00c853;
+      color: #fff;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>🎬 Pathaan (2023)</h1>
-  </header>
-  <main style="padding:20px;text-align:center;">
-    <img src="../assets/images/pathaan.jpg" alt="Pathaan" style="width:100%;max-width:400px;margin:auto;border-radius:10px;">
-    <p style="margin:15px 0;font-size:16px;">📦 480MB | 🎥 720p | 🔊 Hindi</p>
-    <a href="#" class="btn download">⬇️ Download</a>
-    <a href="#" class="btn watch">▶️ Watch Online</a>
-  </main>
-  <footer>
-    <p>© 2025 1Filmy4Wap Clone</p>
-  </footer>
+  <div class="container">
+    <h1 id="movieTitle">Loading...</h1>
+    <video id="videoPlayer" controls autoplay></video>
+    <div class="details">
+      <p><strong>Size:</strong> <span id="movieSize"></span></p>
+      <p><strong>Quality:</strong> <span id="movieQuality"></span></p>
+      <p><strong>Category:</strong> <span id="movieCategory"></span></p>
+    </div>
+    <a href="index.html" class="back">⬅ Back to Home</a>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAOJ4Ye2PmNA9DykjWX4hvFYhjKg0pZuQM",
+      authDomain: "new-wala-app.firebaseapp.com",
+      databaseURL: "https://new-wala-app-default-rtdb.firebaseio.com",
+      projectId: "new-wala-app",
+      storageBucket: "new-wala-app.appspot.com",
+      messagingSenderId: "443237566876",
+      appId: "1:443237566876:web:your_app_id_here"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const title = decodeURIComponent(urlParams.get('id'));
+
+    db.ref('/movies').once('value', (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const movie = Object.values(data).find(m => m.title === title);
+        if (movie) {
+          document.getElementById('movieTitle').innerText = movie.title;
+          document.getElementById('movieSize').innerText = movie.size;
+          document.getElementById('movieQuality').innerText = movie.quality;
+          document.getElementById('movieCategory').innerText = movie.category;
+          document.getElementById('videoPlayer').src = movie.videoUrl;
+        } else {
+          document.getElementById('movieTitle').innerText = "Movie not found";
+        }
+      }
+    });
+  </script>
 </body>
 </html>
