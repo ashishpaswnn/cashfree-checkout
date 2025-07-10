@@ -3,122 +3,120 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎬 Admin Panel - Upload Movies</title>
+  <title>🎬 Admin Panel</title>
   <style>
     body {
-      margin: 0;
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(to right, #1f1c2c, #928dab);
+      margin: 0;
+      background: #0a0a0a;
       color: #fff;
+      padding-bottom: 80px;
     }
-    header {
-      background: #000;
-      padding: 20px;
+    h1 {
       text-align: center;
-      font-size: 1.8em;
-      font-weight: bold;
-      color: #00ffc8;
-    }
-    main {
-      max-width: 700px;
-      margin: 0 auto;
+      background: #001f3f;
       padding: 20px;
+      margin: 0;
+      color: #00ffff;
     }
-    input, select, button {
+    .form-container {
+      padding: 20px;
+      background: #111;
+      margin: 20px;
+      border-radius: 12px;
+    }
+    .form-container input,
+    .form-container select {
+      display: block;
       width: 100%;
-      padding: 12px;
-      margin: 10px 0;
+      margin-bottom: 10px;
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 6px;
       border: none;
-      border-radius: 10px;
-      font-size: 15px;
     }
-    button {
+    .form-container button {
+      padding: 12px;
+      width: 100%;
       background: #00c853;
       color: #fff;
-      font-weight: bold;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
     }
-    .movie-list {
-      margin-top: 40px;
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 20px;
+      padding: 20px;
     }
-    .movie-card {
-      display: flex;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    .card {
+      background: #1a1a1a;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
-    .movie-card img {
-      width: 90px;
-      height: 70px;
-      border-radius: 8px;
+    .card img {
+      width: 100%;
+      height: 120px;
       object-fit: cover;
-      margin-right: 15px;
     }
-    .movie-details {
-      flex: 1;
+    .card .info {
+      padding: 10px;
+      font-size: 13px;
     }
-    #dialog {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.7);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 999;
-    }
-    .dialog-box {
-      background: #222;
-      padding: 20px 30px;
-      border-radius: 15px;
+    #toast {
+      visibility: hidden;
+      min-width: 250px;
+      background-color: #333;
+      color: #fff;
       text-align: center;
-      color: #00ffc8;
-      font-weight: bold;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+      border-radius: 10px;
+      padding: 16px;
+      position: fixed;
+      z-index: 1;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      font-size: 14px;
     }
-    .dialog-box button {
-      margin-top: 20px;
-      background: #00c853;
+    #toast.show {
+      visibility: visible;
+      animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    }
+    @keyframes fadein {
+      from { bottom: 0; opacity: 0; }
+      to { bottom: 30px; opacity: 1; }
+    }
+    @keyframes fadeout {
+      from { bottom: 30px; opacity: 1; }
+      to { bottom: 0; opacity: 0; }
     }
   </style>
 </head>
 <body>
-  <header>🎬 Admin Panel - Upload Movie</header>
-  <main>
-    <input type="text" id="title" placeholder="🎬 Movie Title">
-    <input type="text" id="size" placeholder="💾 Size (e.g. 700MB)">
-    <input type="text" id="quality" placeholder="🎥 Quality (e.g. 1080p)">
+  <h1>🎬 Admin Upload Panel</h1>
+
+  <div class="form-container">
     <select id="category">
-      <option value="Bollywood">Bollywood</option>
-      <option value="South">South</option>
-      <option value="Web Series">Web Series</option>
-      <option value="Dual Audio">Dual Audio</option>
+      <option value="movies">Movies</option>
+      <option value="webseries">Web Series</option>
+      <option value="adult">18+</option>
     </select>
-    <input type="file" id="image" accept="image/*">
-    <input type="file" id="video" accept="video/*">
-    <button onclick="uploadMovie()">⬆ Upload</button>
-
-    <div class="movie-list" id="movieList">
-      <h2>📋 Uploaded Movies</h2>
-    </div>
-  </main>
-
-  <div id="dialog">
-    <div class="dialog-box">
-      ✅ Movie uploaded successfully!
-      <br>
-      <button onclick="hideDialog()">OK</button>
-    </div>
+    <input type="text" id="title" placeholder="Title">
+    <input type="text" id="quality" placeholder="Quality">
+    <input type="text" id="size" placeholder="Size">
+    <input type="text" id="imageUrl" placeholder="Image URL">
+    <input type="text" id="videoUrl" placeholder="Video URL">
+    <button onclick="uploadMovie()">Upload</button>
   </div>
+
+  <div id="movieGrid" class="grid"></div>
+  <div id="toast">✅ Movie Uploaded Successfully!</div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAOJ4Ye2PmNA9DykjWX4hvFYhjKg0pZuQM",
@@ -129,88 +127,63 @@
       messagingSenderId: "443237566876",
       appId: "1:443237566876:web:your_app_id_here"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const storage = firebase.storage();
 
-    function showDialog() {
-      document.getElementById('dialog').style.display = 'flex';
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.innerText = message;
+      toast.className = "show";
+      setTimeout(() => {
+        toast.className = toast.className.replace("show", "");
+      }, 3000);
     }
 
-    function hideDialog() {
-      document.getElementById('dialog').style.display = 'none';
+    function uploadMovie() {
+      const title = document.getElementById("title").value;
+      const quality = document.getElementById("quality").value;
+      const size = document.getElementById("size").value;
+      const imageUrl = document.getElementById("imageUrl").value;
+      const videoUrl = document.getElementById("videoUrl").value;
+      const category = document.getElementById("category").value;
+
+      if (!title || !imageUrl || !videoUrl) return showToast("⚠️ Please fill all required fields");
+
+      const data = { title, quality, size, imageUrl, videoUrl, category };
+      db.ref(`/${category}`).push(data, () => {
+        showToast("✅ Movie Uploaded Successfully!");
+        loadMovies();
+      });
     }
 
-    async function uploadMovie() {
-      const title = document.getElementById('title').value;
-      const size = document.getElementById('size').value;
-      const quality = document.getElementById('quality').value;
-      const category = document.getElementById('category').value;
-      const imageInput = document.getElementById('image');
-      const videoInput = document.getElementById('video');
-      const imageFile = imageInput.files[0];
-      const videoFile = videoInput.files[0];
-
-      if (!title || !imageFile || !videoFile) {
-        alert("❌ Please fill all fields and select files.");
-        return;
-      }
-
-      try {
-        const imageRef = storage.ref('images/' + Date.now() + '_' + imageFile.name);
-        const videoRef = storage.ref('videos/' + Date.now() + '_' + videoFile.name);
-
-        await imageRef.put(imageFile);
-        const imageUrl = await imageRef.getDownloadURL();
-
-        await videoRef.put(videoFile);
-        const videoUrl = await videoRef.getDownloadURL();
-
-        await db.ref('/movies').push({
-          title,
-          size,
-          quality,
-          category,
-          imageUrl,
-          videoUrl
-        });
-
-        // Clear inputs
-        document.getElementById('title').value = '';
-        document.getElementById('size').value = '';
-        document.getElementById('quality').value = '';
-        document.getElementById('category').selectedIndex = 0;
-        imageInput.value = '';
-        videoInput.value = '';
-
-        showDialog();
-
-      } catch (err) {
-        alert("❌ Upload failed: " + err.message);
-      }
-    }
-
-    db.ref('/movies').on('value', (snapshot) => {
-      const data = snapshot.val();
-      const movieList = document.getElementById('movieList');
-      movieList.innerHTML = '<h2>📋 Uploaded Movies</h2>';
-      if (data) {
-        Object.values(data).forEach((movie) => {
-          movieList.innerHTML += `
-            <div class="movie-card">
-              <img src="${movie.imageUrl}" alt="${movie.title}">
-              <div class="movie-details">
-                <h3>${movie.title}</h3>
-                <p>🎞 ${movie.quality} | 💾 ${movie.size} | 🏷 ${movie.category}</p>
+    function loadMovies() {
+      const category = document.getElementById("category").value;
+      const grid = document.getElementById("movieGrid");
+      grid.innerHTML = '<div class="loading">Loading...</div>';
+      db.ref(`/${category}`).once('value', (snapshot) => {
+        const data = snapshot.val();
+        grid.innerHTML = '';
+        if (data) {
+          Object.values(data).forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+              <img src="${item.imageUrl}" alt="${item.title}">
+              <div class="info">
+                <strong>${item.title}</strong><br>
+                ${item.quality} | ${item.size}
               </div>
-            </div>
-          `;
-        });
-      } else {
-        movieList.innerHTML += '<p>No movies uploaded yet.</p>';
-      }
-    });
+            `;
+            grid.appendChild(div);
+          });
+        } else {
+          grid.innerHTML = '<div class="loading">No content found.</div>';
+        }
+      });
+    }
+
+    document.getElementById("category").addEventListener("change", loadMovies);
+    window.onload = loadMovies;
   </script>
 </body>
 </html>
