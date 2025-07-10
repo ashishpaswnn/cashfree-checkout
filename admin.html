@@ -1,4 +1,4 @@
-<!-- ✅ Final Admin Panel with Working Realtime DB Push -->
+<!-- ✅ Final Admin Panel with Link Input and Success Dialog -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -71,6 +71,23 @@
       display: none;
       z-index: 1000;
     }
+    .dialog {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      display: none;
+    }
+    .dialog-box {
+      background: #111;
+      padding: 24px;
+      border-radius: 16px;
+      text-align: center;
+      color: #00ffcc;
+    }
   </style>
 </head>
 <body>
@@ -86,8 +103,8 @@
   <option value="Web Series">Web Series</option>
   <option value="Dual Audio">Dual Audio</option>
 </select>
-<input type="file" id="image" accept="image/*">
-<input type="file" id="video" accept="video/*">
+<input type="text" id="imageUrl" placeholder="🖼 Paste image URL">
+<input type="text" id="videoUrl" placeholder="🎬 Paste video URL">
 <button onclick="uploadMovie()">⬆ Upload</button>
 <p id="status"></p>
 
@@ -95,10 +112,16 @@
   <h2>📋 Uploaded Movies</h2>
 </div>
 <div id="toast" class="toast"></div>
+<div id="dialog" class="dialog">
+  <div class="dialog-box">
+    ✅ Movie uploaded successfully!
+    <br><br>
+    <button onclick="closeDialog()">OK</button>
+  </div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
 <script>
   const firebaseConfig = {
@@ -113,7 +136,6 @@
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
-  const storage = firebase.storage();
 
   function showToast(message) {
     const toast = document.getElementById('toast');
@@ -122,48 +144,32 @@
     setTimeout(() => toast.style.display = 'none', 4000);
   }
 
+  function openDialog() {
+    document.getElementById('dialog').style.display = 'flex';
+  }
+
+  function closeDialog() {
+    document.getElementById('dialog').style.display = 'none';
+  }
+
   async function uploadMovie() {
     const title = document.getElementById('title').value;
     const size = document.getElementById('size').value;
     const quality = document.getElementById('quality').value;
     const category = document.getElementById('category').value;
-    const imageFile = document.getElementById('image').files[0];
-    const videoFile = document.getElementById('video').files[0];
+    const imageUrl = document.getElementById('imageUrl').value;
+    const videoUrl = document.getElementById('videoUrl').value;
     const status = document.getElementById('status');
 
-    if (!title || !imageFile || !videoFile) {
-      status.textContent = "❌ Please fill all fields and select files.";
+    if (!title || !imageUrl || !videoUrl) {
+      status.textContent = "❌ Please fill all fields and paste valid URLs.";
       return;
     }
 
-    status.textContent = "Uploading image...";
-    showToast("Uploading image...");
+    status.textContent = "⏳ Uploading to database...";
+    showToast("Uploading movie...");
 
     try {
-      const imageRef = storage.ref('images/' + Date.now() + '_' + imageFile.name);
-      const videoRef = storage.ref('videos/' + Date.now() + '_' + videoFile.name);
-
-      const imgTask = imageRef.put(imageFile);
-      await new Promise((resolve, reject) => {
-        imgTask.on('state_changed', (snap) => {
-          const percent = (snap.bytesTransferred / snap.totalBytes) * 100;
-          showToast(`🖼 Image uploading: ${percent.toFixed(0)}%`);
-        }, reject, resolve);
-      });
-      const imageUrl = await imageRef.getDownloadURL();
-
-      status.textContent = "Uploading video...";
-      showToast("Uploading video...");
-
-      const vidTask = videoRef.put(videoFile);
-      await new Promise((resolve, reject) => {
-        vidTask.on('state_changed', (snap) => {
-          const percent = (snap.bytesTransferred / snap.totalBytes) * 100;
-          showToast(`🎬 Video uploading: ${percent.toFixed(0)}%`);
-        }, reject, resolve);
-      });
-      const videoUrl = await videoRef.getDownloadURL();
-
       await db.ref('/movies').push({
         title: title,
         size: size,
@@ -174,7 +180,7 @@
       });
 
       status.textContent = "✅ Movie uploaded successfully!";
-      showToast("✅ Movie uploaded successfully!");
+      openDialog();
       document.querySelectorAll('input').forEach(e => e.value = '');
     } catch (err) {
       console.error(err);
