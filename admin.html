@@ -1,24 +1,20 @@
-<!-- ✅ Admin Panel with Category Dropdown & Realtime Movie List -->
+<!-- ✅ Final Admin Panel - With Category, Firebase Upload (Working Version) -->
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎬 Movie Uploader Admin Panel</title>
+  <title>🎬 Movie Uploader Admin</title>
   <style>
     body {
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(to right, #000046, #1cb5e0);
+      background: linear-gradient(to right, #000428, #004e92);
       color: #fff;
-      margin: 0;
       padding: 20px;
     }
     h1 {
       text-align: center;
       color: #00ffe0;
-    }
-    label {
-      font-weight: bold;
     }
     input, select, button {
       width: 100%;
@@ -64,31 +60,19 @@
 </head>
 <body>
 
-<h1>📤 Upload New Movie</h1>
+<h1>📤 Upload Movie to Firebase</h1>
 
-<label>Title</label>
-<input type="text" id="title" placeholder="Enter movie title">
-
-<label>Size</label>
-<input type="text" id="size" placeholder="e.g. 480MB">
-
-<label>Quality</label>
-<input type="text" id="quality" placeholder="e.g. 720p">
-
-<label>Category</label>
+<input type="text" id="title" placeholder="🎬 Movie Title">
+<input type="text" id="size" placeholder="💾 Size (e.g. 700MB)">
+<input type="text" id="quality" placeholder="🎥 Quality (e.g. 1080p)">
 <select id="category">
   <option value="Bollywood">Bollywood</option>
   <option value="South">South</option>
   <option value="Web Series">Web Series</option>
   <option value="Dual Audio">Dual Audio</option>
 </select>
-
-<label>Thumbnail Image</label>
 <input type="file" id="image" accept="image/*">
-
-<label>Video File</label>
 <input type="file" id="video" accept="video/*">
-
 <button onclick="uploadMovie()">⬆ Upload</button>
 <p id="status"></p>
 
@@ -108,7 +92,7 @@
     projectId: "new-wala-app",
     storageBucket: "new-wala-app.appspot.com",
     messagingSenderId: "443237566876",
-    appId: "new-wala-app"
+    appId: "1:443237566876:web:new-wala-app"
   };
 
   firebase.initializeApp(firebaseConfig);
@@ -125,60 +109,62 @@
     const status = document.getElementById('status');
 
     if (!title || !imageFile || !videoFile) {
-      status.textContent = "Please fill all fields and select files.";
+      status.textContent = "❌ Please fill all fields and select files.";
       return;
     }
 
-    status.textContent = "Uploading...";
+    status.textContent = "Uploading image...";
 
     try {
-      const imageRef = storage.ref('images/' + imageFile.name);
-      const videoRef = storage.ref('videos/' + videoFile.name);
+      const imageRef = storage.ref('images/' + Date.now() + '_' + imageFile.name);
+      const videoRef = storage.ref('videos/' + Date.now() + '_' + videoFile.name);
 
-      const imageSnap = await imageRef.put(imageFile);
-      const videoSnap = await videoRef.put(videoFile);
+      // Upload Image
+      const imgTask = imageRef.put(imageFile);
+      await new Promise((resolve, reject) => {
+        imgTask.on('state_changed', null, reject, resolve);
+      });
+      const imageUrl = await imageRef.getDownloadURL();
 
-      const imageUrl = await imageSnap.ref.getDownloadURL();
-      const videoUrl = await videoSnap.ref.getDownloadURL();
+      status.textContent = "Uploading video...";
+      const vidTask = videoRef.put(videoFile);
+      await new Promise((resolve, reject) => {
+        vidTask.on('state_changed', (snap) => {
+          const percent = (snap.bytesTransferred / snap.totalBytes) * 100;
+          status.textContent = `Uploading video: ${percent.toFixed(0)}%`;
+        }, reject, resolve);
+      });
+      const videoUrl = await videoRef.getDownloadURL();
 
-      const newMovieRef = db.ref('movies').push();
-      await newMovieRef.set({
-        title,
-        size,
-        quality,
-        category,
-        imageUrl,
-        videoUrl
+      await db.ref('movies').push({
+        title, size, quality, category, imageUrl, videoUrl
       });
 
       status.textContent = "✅ Movie uploaded successfully!";
       document.querySelectorAll('input').forEach(e => e.value = '');
     } catch (err) {
       console.error(err);
-      status.textContent = "❌ Error uploading movie.";
+      status.textContent = "❌ Error: " + err.message;
     }
   }
 
-  // 🔁 Realtime fetch and display movies
-  const movieList = document.getElementById('movieList');
   db.ref('movies').on('value', (snapshot) => {
     const data = snapshot.val();
+    const movieList = document.getElementById('movieList');
     movieList.innerHTML = '<h2>📋 Uploaded Movies</h2>';
     for (let key in data) {
       const movie = data[key];
-      const html = `
+      movieList.innerHTML += `
         <div class="movie-card">
-          <img src="${movie.imageUrl}" alt="${movie.title}" />
+          <img src="${movie.imageUrl}" alt="${movie.title}">
           <div class="movie-details">
             <h3>${movie.title}</h3>
             <p>🎞 ${movie.quality} | 💾 ${movie.size} | 🏷 ${movie.category}</p>
           </div>
         </div>
       `;
-      movieList.innerHTML += html;
     }
   });
 </script>
-
 </body>
 </html>
