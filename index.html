@@ -1,68 +1,231 @@
+<!-- ✅ Advanced index.html with Firebase + Category Tabs + Pagination + Dark/Light Toggle -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>1Filmy4Wap Clone</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <title>🎬 FilmyWap - Movies</title>
+  <style>
+    :root {
+      --bg-dark: #0f0c29;
+      --bg-light: #f2f2f2;
+      --text-dark: #fff;
+      --text-light: #111;
+      --card-bg-dark: #1c1c1c;
+      --card-bg-light: #ffffff;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: var(--bg-dark);
+      color: var(--text-dark);
+      transition: 0.4s ease;
+    }
+    header {
+      background: linear-gradient(to right, #ff512f, #dd2476);
+      padding: 20px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: bold;
+      color: #fff;
+    }
+    .top-controls {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 200px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+    }
+    .toggle {
+      padding: 10px 15px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      background: #00e5ff;
+      font-weight: bold;
+    }
+    .categories {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px;
+      flex-wrap: wrap;
+    }
+    .cat-btn {
+      background: #ff9a9e;
+      color: #000;
+      padding: 8px 15px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      border: none;
+    }
+    .cat-btn.active {
+      background: #fff;
+      color: #000;
+    }
+    .movie-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+    .movie-card {
+      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+      color: #000;
+      padding: 15px;
+      border-radius: 15px;
+      text-align: center;
+      text-decoration: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      transition: 0.3s ease;
+    }
+    .movie-card:hover {
+      transform: scale(1.05);
+    }
+    .movie-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+    .movie-card h2 {
+      font-size: 16px;
+      margin: 10px 0 5px;
+    }
+    .movie-card p {
+      font-size: 13px;
+      margin: 0;
+    }
+    .pagination {
+      text-align: center;
+      padding: 15px;
+    }
+    .pagination button {
+      padding: 8px 15px;
+      margin: 5px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
   <header>
-    <h1>🎬 1Filmy4Wap Clone</h1>
-    <input type="text" id="searchBox" placeholder="Search movies...">
+    <h1>🎬 FilmyWap Movies</h1>
+    <div class="top-controls">
+      <input type="text" id="searchBox" placeholder="Search...">
+      <button class="toggle" onclick="toggleTheme()">🌙 Toggle Theme</button>
+    </div>
   </header>
 
-  <main>
-    <div class="movie-grid" id="movieGrid">
-      <a href="movies/movie1.html" class="movie-card">
-        <img src="assets/images/pathaan.jpg" alt="Pathaan">
-        <h2>Pathaan (2023)</h2>
-        <p>📦 480MB | 🎥 720p</p>
-      </a>
-      <a href="movies/movie2.html" class="movie-card">
-        <img src="assets/images/tiger3.jpg" alt="Tiger 3">
-        <h2>Tiger 3 (2023)</h2>
-        <p>📦 500MB | 🎥 1080p</p>
-      </a>
-    </div>
-  </main>
+  <div class="categories">
+    <button class="cat-btn active" onclick="filterCategory('All')">All</button>
+    <button class="cat-btn" onclick="filterCategory('Bollywood')">Bollywood</button>
+    <button class="cat-btn" onclick="filterCategory('South')">South</button>
+    <button class="cat-btn" onclick="filterCategory('Web Series')">Web Series</button>
+    <button class="cat-btn" onclick="filterCategory('Dual Audio')">Dual Audio</button>
+  </div>
 
-  <footer>
-    <p>© 2025 1Filmy4Wap Clone | All rights reserved.</p>
-  </footer>
+  <div class="movie-grid" id="movieGrid"></div>
+  <div class="pagination" id="pagination"></div>
 
-  <nav class="bottom-nav">
-  <a href="#" class="nav-item active">
-    <i>🏠</i>
-    <span>Home</span>
-  </a>
-  <a href="#" class="nav-item">
-    <i>📁</i>
-    <span>Categories</span>
-  </a>
-  <a href="#" class="nav-item">
-    <i>🔥</i>
-    <span>Trending</span>
-  </a>
-  <a href="#" class="nav-item">
-    <i>🔔</i>
-    <span>Updates</span>
-  </a>
-</nav>
-
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
   <script>
-    const searchBox = document.getElementById('searchBox');
+    const firebaseConfig = {
+      apiKey: "AIzaSyAOJ4Ye2PmNA9DykjWX4hvFYhjKg0pZuQM",
+      authDomain: "new-wala-app.firebaseapp.com",
+      databaseURL: "https://new-wala-app.firebaseio.com",
+      projectId: "new-wala-app",
+      storageBucket: "new-wala-app.appspot.com",
+      messagingSenderId: "443237566876",
+      appId: "new-wala-app"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let allMovies = [], currentPage = 1, itemsPerPage = 8, currentCategory = 'All';
+
     const movieGrid = document.getElementById('movieGrid');
+    const pagination = document.getElementById('pagination');
 
-    searchBox.addEventListener('keyup', () => {
-      const keyword = searchBox.value.toLowerCase();
-      const cards = movieGrid.querySelectorAll('.movie-card');
+    function renderMovies() {
+      movieGrid.innerHTML = '';
+      let filtered = currentCategory === 'All' ? allMovies : allMovies.filter(m => m.category === currentCategory);
+      let start = (currentPage - 1) * itemsPerPage;
+      let paginated = filtered.slice(start, start + itemsPerPage);
+      paginated.forEach(movie => {
+        const card = document.createElement('a');
+        card.className = 'movie-card';
+        card.href = `movie.html?id=${movie.id}`;
+        card.innerHTML = `
+          <img src="${movie.imageUrl}" alt="${movie.title}">
+          <h2>${movie.title}</h2>
+          <p>📦 ${movie.size} | 🎥 ${movie.quality}</p>
+        `;
+        movieGrid.appendChild(card);
+      });
+      renderPagination(filtered.length);
+    }
 
-      cards.forEach(card => {
+    function renderPagination(totalItems) {
+      pagination.innerHTML = '';
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        if (i === currentPage) btn.style.background = '#00e6e6';
+        btn.onclick = () => { currentPage = i; renderMovies(); };
+        pagination.appendChild(btn);
+      }
+    }
+
+    function filterCategory(cat) {
+      currentCategory = cat;
+      currentPage = 1;
+      document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+      [...document.querySelectorAll('.cat-btn')].find(b => b.textContent === cat || (cat === 'All' && b.textContent === 'All')).classList.add('active');
+      renderMovies();
+    }
+
+    document.getElementById('searchBox').addEventListener('input', function () {
+      const keyword = this.value.toLowerCase();
+      document.querySelectorAll('.movie-card').forEach(card => {
         const title = card.querySelector('h2').textContent.toLowerCase();
         card.style.display = title.includes(keyword) ? 'block' : 'none';
       });
+    });
+
+    function toggleTheme() {
+      const dark = getComputedStyle(document.body).backgroundColor === 'rgb(15, 12, 41)';
+      document.body.style.background = dark ? 'var(--bg-light)' : 'var(--bg-dark)';
+      document.body.style.color = dark ? 'var(--text-light)' : 'var(--text-dark)';
+    }
+
+    db.ref('movies').on('value', (snapshot) => {
+      const data = snapshot.val();
+      allMovies = [];
+      for (let key in data) {
+        allMovies.push({ id: key, ...data[key] });
+      }
+      renderMovies();
     });
   </script>
 </body>
