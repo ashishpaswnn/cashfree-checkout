@@ -66,6 +66,19 @@
       padding: 10px;
       font-size: 13px;
     }
+    .card .actions {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+    }
+    .card .actions button {
+      padding: 6px 10px;
+      background: #ff5252;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+    }
     #toast {
       visibility: hidden;
       min-width: 250px;
@@ -107,8 +120,8 @@
     <input type="text" id="title" placeholder="Title">
     <input type="text" id="quality" placeholder="Quality">
     <input type="text" id="size" placeholder="Size">
-    <input type="text" id="imageUrl" placeholder="Image URL">
-    <input type="text" id="videoUrl" placeholder="Video URL">
+    <input type="file" id="imageFile" accept="image/*">
+    <input type="file" id="videoFile" accept="video/*">
     <button onclick="uploadMovie()">Upload</button>
   </div>
 
@@ -117,6 +130,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAOJ4Ye2PmNA9DykjWX4hvFYhjKg0pZuQM",
@@ -129,6 +143,7 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const storage = firebase.storage();
 
     function showToast(message) {
       const toast = document.getElementById("toast");
@@ -143,15 +158,33 @@
       const title = document.getElementById("title").value;
       const quality = document.getElementById("quality").value;
       const size = document.getElementById("size").value;
-      const imageUrl = document.getElementById("imageUrl").value;
-      const videoUrl = document.getElementById("videoUrl").value;
+      const imageFile = document.getElementById("imageFile").files[0];
+      const videoFile = document.getElementById("videoFile").files[0];
       const category = document.getElementById("category").value;
 
-      if (!title || !imageUrl || !videoUrl) return showToast("⚠️ Please fill all required fields");
+      if (!title || !imageFile || !videoFile) return showToast("⚠️ Please fill all required fields");
 
-      const data = { title, quality, size, imageUrl, videoUrl, category };
-      db.ref(`/${category}`).push(data, () => {
-        showToast("✅ Movie Uploaded Successfully!");
+      const imageRef = storage.ref(`images/${imageFile.name}`);
+      const videoRef = storage.ref(`videos/${videoFile.name}`);
+
+      Promise.all([
+        imageRef.put(imageFile),
+        videoRef.put(videoFile)
+      ]).then(async ([imageSnap, videoSnap]) => {
+        const imageUrl = await imageSnap.ref.getDownloadURL();
+        const videoUrl = await videoSnap.ref.getDownloadURL();
+
+        const data = { title, quality, size, imageUrl, videoUrl, category };
+        db.ref(`/${category}`).push(data, () => {
+          showToast("✅ Movie Uploaded Successfully!");
+          loadMovies();
+        });
+      });
+    }
+
+    function deleteMovie(category, key) {
+      db.ref(`/${category}/${key}`).remove(() => {
+        showToast("🗑️ Movie Deleted");
         loadMovies();
       });
     }
@@ -164,7 +197,7 @@
         const data = snapshot.val();
         grid.innerHTML = '';
         if (data) {
-          Object.values(data).forEach(item => {
+          Object.entries(data).forEach(([key, item]) => {
             const div = document.createElement('div');
             div.className = 'card';
             div.innerHTML = `
@@ -172,6 +205,9 @@
               <div class="info">
                 <strong>${item.title}</strong><br>
                 ${item.quality} | ${item.size}
+              </div>
+              <div class="actions">
+                <button onclick="deleteMovie('${category}', '${key}')">Delete</button>
               </div>
             `;
             grid.appendChild(div);
