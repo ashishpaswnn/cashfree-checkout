@@ -1,106 +1,118 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>📍 Live Location Tracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎬 Filmy4Wap - Latest Movies</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right, #4facfe, #00f2fe);
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: linear-gradient(to right, #001f3f, #0074D9);
       color: #fff;
+    }
+    header {
       text-align: center;
-      padding: 50px 20px;
+      padding: 20px;
+      background: #001f3f;
+      color: #7FDBFF;
+      font-size: 1.5em;
+      font-weight: bold;
     }
-
-    .container {
-      background-color: rgba(0, 0, 0, 0.4);
-      padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-      max-width: 400px;
-      margin: auto;
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+      padding: 20px;
     }
-
-    h2 {
-      font-size: 26px;
-      margin-bottom: 20px;
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+      transition: transform 0.3s;
     }
-
-    .info {
+    .card:hover {
+      transform: scale(1.05);
+    }
+    .card img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+    }
+    .card-content {
+      padding: 15px;
+    }
+    .card h3 {
+      margin: 0;
       font-size: 18px;
-      margin: 10px 0;
     }
-
-    .status {
-      margin-bottom: 20px;
-      font-weight: bold;
+    .card p {
+      font-size: 14px;
+      margin-top: 8px;
+      color: #cceeff;
     }
-
-    a#mapLink {
+    .card a {
       display: inline-block;
-      margin-top: 15px;
-      padding: 12px 20px;
-      background-color: #00e676;
-      color: #000;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: bold;
-      transition: all 0.3s ease-in-out;
+      margin-top: 10px;
+      color: #7FDBFF;
+      text-decoration: underline;
     }
-
-    a#mapLink:hover {
-      background-color: #00c853;
+    .loading {
+      text-align: center;
+      padding: 40px;
+      font-size: 18px;
+      color: #7FDBFF;
     }
-
-    .loader {
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-top: 4px solid white;
-      border-radius: 50%;
-      width: 32px;
-      height: 32px;
-      animation: spin 1s linear infinite;
-      margin: auto;
-      margin-bottom: 15px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>📍 Your Live Location</h2>
-    <div class="loader" id="loader"></div>
-    <p class="status" id="status">Fetching location...</p>
-    <p class="info"><strong>Latitude:</strong> <span id="lat">-</span></p>
-    <p class="info"><strong>Longitude:</strong> <span id="lon">-</span></p>
-    <a id="mapLink" href="#" target="_blank" style="display:none;">View on Google Maps</a>
-  </div>
+  <header>🎬 Filmy4Wap - Latest Movies</header>
+  <div id="movieGrid" class="grid"></div>
+  <div id="loading" class="loading">Loading movies...</div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <script>
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(function(position) {
-        const lat = position.coords.latitude.toFixed(6);
-        const lon = position.coords.longitude.toFixed(6);
-        
-        document.getElementById("lat").textContent = lat;
-        document.getElementById("lon").textContent = lon;
-        document.getElementById("mapLink").href = `https://www.google.com/maps?q=${lat},${lon}`;
-        document.getElementById("mapLink").style.display = 'inline-block';
-        document.getElementById("status").textContent = "✅ Location fetched successfully!";
-        document.getElementById("loader").style.display = "none";
-      }, function(error) {
-        document.getElementById("status").textContent = "❌ Failed to fetch location: " + error.message;
-        document.getElementById("loader").style.display = "none";
-      });
-    } else {
-      document.getElementById("status").textContent = "❌ Geolocation is not supported in this browser.";
-      document.getElementById("loader").style.display = "none";
-    }
+    const firebaseConfig = {
+      apiKey: "AIzaSyAOJ4Ye2PmNA9DykjWX4hvFYhjKg0pZuQM",
+      authDomain: "new-wala-app.firebaseapp.com",
+      databaseURL: "https://new-wala-app-default-rtdb.firebaseio.com",
+      projectId: "new-wala-app",
+      storageBucket: "new-wala-app.appspot.com",
+      messagingSenderId: "443237566876",
+      appId: "1:443237566876:web:your_app_id_here"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const movieGrid = document.getElementById('movieGrid');
+    const loading = document.getElementById('loading');
+
+    db.ref('/movies').once('value', (snapshot) => {
+      const data = snapshot.val();
+      movieGrid.innerHTML = '';
+      if (data) {
+        Object.values(data).forEach(movie => {
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `
+            <img src="${movie.imageUrl}" alt="${movie.title}" />
+            <div class="card-content">
+              <h3>${movie.title}</h3>
+              <p>🎞 ${movie.quality} | 💾 ${movie.size} | 🏷 ${movie.category}</p>
+              <a href="movie.html?id=${encodeURIComponent(movie.title)}">Watch / Download</a>
+            </div>
+          `;
+          movieGrid.appendChild(div);
+        });
+        loading.style.display = 'none';
+      } else {
+        loading.innerText = 'No movies found.';
+      }
+    });
   </script>
 </body>
 </html>
