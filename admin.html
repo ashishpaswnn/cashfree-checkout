@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎬 Admin Panel</title>
+  <title>🎬 Admin Upload Panel</title>
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -143,9 +143,14 @@
       <input type="text" id="title" placeholder="Title">
       <input type="text" id="quality" placeholder="Quality">
       <input type="text" id="size" placeholder="Size">
+
       <input type="file" id="imageFile" accept="image/*" onchange="previewImage(event)">
+      <input type="text" id="imageLink" placeholder="or paste Image URL">
       <img id="preview" style="display:none">
+
       <input type="file" id="videoFile" accept="video/*">
+      <input type="text" id="videoLink" placeholder="or paste Video URL">
+
       <button onclick="uploadMovie()">Upload</button>
     </div>
 
@@ -153,7 +158,6 @@
   </div>
 
   <div id="toast">✅ Movie Uploaded Successfully!</div>
-
   <div id="progressDialog">
     <div class="box">
       <h3>Uploading...</h3>
@@ -178,8 +182,6 @@
     const db = firebase.database();
     const storage = firebase.storage();
 
-    let editKey = null;
-
     function showToast(message) {
       const toast = document.getElementById("toast");
       toast.innerText = message;
@@ -201,34 +203,35 @@
       const size = document.getElementById("size").value;
       const imageFile = document.getElementById("imageFile").files[0];
       const videoFile = document.getElementById("videoFile").files[0];
+      const imageLink = document.getElementById("imageLink").value;
+      const videoLink = document.getElementById("videoLink").value;
       const category = document.getElementById("category").value;
 
-      if (!title || !imageFile || !videoFile) return showToast("⚠️ All fields required");
+      if (!title || (!imageFile && !imageLink) || (!videoFile && !videoLink)) {
+        return showToast("⚠️ Title, Image and Video required");
+      }
 
       document.getElementById("progressDialog").style.display = "flex";
 
-      const imageRef = storage.ref(`images/${imageFile.name}`);
-      const videoRef = storage.ref(`videos/${videoFile.name}`);
+      const uploadImage = imageFile ? storage.ref(`images/${imageFile.name}`).put(imageFile) : Promise.resolve(null);
+      const uploadVideo = videoFile ? storage.ref(`videos/${videoFile.name}`).put(videoFile) : Promise.resolve(null);
 
-      let imageUpload = imageRef.put(imageFile);
-      let videoUpload = videoRef.put(videoFile);
+      if (imageFile) {
+        uploadImage.on('state_changed', (snapshot) => {
+          const percent = Math.floor((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+          document.getElementById("progressText").innerText = `Image: ${percent}%`;
+        });
+      }
+      if (videoFile) {
+        uploadVideo.on('state_changed', (snapshot) => {
+          const percent = Math.floor((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+          document.getElementById("progressText").innerText = `Video: ${percent}%`;
+        });
+      }
 
-      imageUpload.on('state_changed', (snapshot) => {
-        const percent = Math.floor((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-        document.getElementById("progressText").innerText = `Image: ${percent}%`;
-      });
-
-      videoUpload.on('state_changed', (snapshot) => {
-        const percent = Math.floor((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-        document.getElementById("progressText").innerText = `Video: ${percent}%`;
-      });
-
-      Promise.all([
-        imageUpload,
-        videoUpload
-      ]).then(async ([imageSnap, videoSnap]) => {
-        const imageUrl = await imageSnap.ref.getDownloadURL();
-        const videoUrl = await videoSnap.ref.getDownloadURL();
+      Promise.all([uploadImage, uploadVideo]).then(async ([imgSnap, vidSnap]) => {
+        const imageUrl = imageFile ? await imgSnap.ref.getDownloadURL() : imageLink;
+        const videoUrl = videoFile ? await vidSnap.ref.getDownloadURL() : videoLink;
 
         const data = { title, quality, size, imageUrl, videoUrl, category };
         db.ref(`/${category}`).push(data, () => {
@@ -251,7 +254,6 @@
       document.getElementById("quality").value = item.quality;
       document.getElementById("size").value = item.size;
       document.getElementById("category").value = category;
-      editKey = key;
     }
 
     function loadMovies() {
