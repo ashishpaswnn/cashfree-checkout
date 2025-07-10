@@ -1,72 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎬 Filmy4Wap - Latest Movies</title>
+  <title>🎬 Admin Panel - Upload Movies</title>
   <style>
     body {
-      font-family: 'Poppins', sans-serif;
       margin: 0;
-      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #1f1c2c, #928dab);
       color: #fff;
     }
     header {
-      text-align: center;
-      padding: 20px;
       background: #000;
-      color: #00ffc8;
-      font-size: 1.5em;
+      padding: 20px;
+      text-align: center;
+      font-size: 1.8em;
       font-weight: bold;
+      color: #00ffc8;
     }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 20px;
+    main {
+      max-width: 700px;
+      margin: 0 auto;
       padding: 20px;
     }
-    .card {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-      transition: transform 0.3s;
-    }
-    .card:hover {
-      transform: scale(1.05);
-    }
-    .card img {
+    input, select, button {
       width: 100%;
-      height: 160px;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+    }
+    button {
+      background: #00c853;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .movie-list {
+      margin-top: 40px;
+    }
+    .movie-card {
+      display: flex;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .movie-card img {
+      width: 90px;
+      height: 70px;
+      border-radius: 8px;
       object-fit: cover;
+      margin-right: 15px;
     }
-    .card-content {
-      padding: 15px;
+    .movie-details {
+      flex: 1;
     }
-    .card h3 {
-      margin: 0;
-      font-size: 18px;
+    #dialog {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
     }
-    .card p {
-      font-size: 14px;
-      margin-top: 8px;
-      color: #ddd;
-    }
-    .loading {
+    .dialog-box {
+      background: #222;
+      padding: 20px 30px;
+      border-radius: 15px;
       text-align: center;
-      padding: 40px;
-      font-size: 18px;
       color: #00ffc8;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    }
+    .dialog-box button {
+      margin-top: 20px;
+      background: #00c853;
     }
   </style>
 </head>
 <body>
-  <header>🎬 Filmy4Wap - Latest Movies</header>
-  <div id="movieGrid" class="grid"></div>
-  <div id="loading" class="loading">Loading movies...</div>
+  <header>🎬 Admin Panel - Upload Movie</header>
+  <main>
+    <input type="text" id="title" placeholder="🎬 Movie Title">
+    <input type="text" id="size" placeholder="💾 Size (e.g. 700MB)">
+    <input type="text" id="quality" placeholder="🎥 Quality (e.g. 1080p)">
+    <select id="category">
+      <option value="Bollywood">Bollywood</option>
+      <option value="South">South</option>
+      <option value="Web Series">Web Series</option>
+      <option value="Dual Audio">Dual Audio</option>
+    </select>
+    <input type="file" id="image" accept="image/*">
+    <input type="file" id="video" accept="video/*">
+    <button onclick="uploadMovie()">⬆ Upload</button>
+
+    <div class="movie-list" id="movieList">
+      <h2>📋 Uploaded Movies</h2>
+    </div>
+  </main>
+
+  <div id="dialog">
+    <div class="dialog-box">
+      ✅ Movie uploaded successfully!
+      <br>
+      <button onclick="hideDialog()">OK</button>
+    </div>
+  </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
   <script>
     const firebaseConfig = {
@@ -81,30 +132,83 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const storage = firebase.storage();
 
-    const movieGrid = document.getElementById('movieGrid');
-    const loading = document.getElementById('loading');
+    function showDialog() {
+      document.getElementById('dialog').style.display = 'flex';
+    }
+
+    function hideDialog() {
+      document.getElementById('dialog').style.display = 'none';
+    }
+
+    async function uploadMovie() {
+      const title = document.getElementById('title').value;
+      const size = document.getElementById('size').value;
+      const quality = document.getElementById('quality').value;
+      const category = document.getElementById('category').value;
+      const imageInput = document.getElementById('image');
+      const videoInput = document.getElementById('video');
+      const imageFile = imageInput.files[0];
+      const videoFile = videoInput.files[0];
+
+      if (!title || !imageFile || !videoFile) {
+        alert("❌ Please fill all fields and select files.");
+        return;
+      }
+
+      try {
+        const imageRef = storage.ref('images/' + Date.now() + '_' + imageFile.name);
+        const videoRef = storage.ref('videos/' + Date.now() + '_' + videoFile.name);
+
+        await imageRef.put(imageFile);
+        const imageUrl = await imageRef.getDownloadURL();
+
+        await videoRef.put(videoFile);
+        const videoUrl = await videoRef.getDownloadURL();
+
+        await db.ref('/movies').push({
+          title,
+          size,
+          quality,
+          category,
+          imageUrl,
+          videoUrl
+        });
+
+        // Clear inputs
+        document.getElementById('title').value = '';
+        document.getElementById('size').value = '';
+        document.getElementById('quality').value = '';
+        document.getElementById('category').selectedIndex = 0;
+        imageInput.value = '';
+        videoInput.value = '';
+
+        showDialog();
+
+      } catch (err) {
+        alert("❌ Upload failed: " + err.message);
+      }
+    }
 
     db.ref('/movies').on('value', (snapshot) => {
       const data = snapshot.val();
-      movieGrid.innerHTML = '';
+      const movieList = document.getElementById('movieList');
+      movieList.innerHTML = '<h2>📋 Uploaded Movies</h2>';
       if (data) {
-        Object.values(data).forEach(movie => {
-          const div = document.createElement('div');
-          div.className = 'card';
-          div.innerHTML = `
-            <img src="${movie.imageUrl}" alt="${movie.title}" />
-            <div class="card-content">
-              <h3>${movie.title}</h3>
-              <p>🎞 ${movie.quality} | 💾 ${movie.size} | 🏷 ${movie.category}</p>
-              <a href="movie.html?id=${movie.title}" style="color:#00ffc8; text-decoration:underline">Watch / Download</a>
+        Object.values(data).forEach((movie) => {
+          movieList.innerHTML += `
+            <div class="movie-card">
+              <img src="${movie.imageUrl}" alt="${movie.title}">
+              <div class="movie-details">
+                <h3>${movie.title}</h3>
+                <p>🎞 ${movie.quality} | 💾 ${movie.size} | 🏷 ${movie.category}</p>
+              </div>
             </div>
           `;
-          movieGrid.appendChild(div);
         });
-        loading.style.display = 'none';
       } else {
-        loading.innerText = 'No movies found.';
+        movieList.innerHTML += '<p>No movies uploaded yet.</p>';
       }
     });
   </script>
