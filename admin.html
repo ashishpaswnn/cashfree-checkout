@@ -1,214 +1,206 @@
-<!-- ✅ Final Admin Panel with Link Input and Success Dialog -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎬 Movie Uploader Admin</title>
+  <title>🎬 Filmy4Wap Admin Panel</title>
   <style>
     body {
+      margin: 0;
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(to right, #000428, #004e92);
+      background: linear-gradient(to right, #1f1c2c, #928dab);
       color: #fff;
-      padding: 20px;
     }
-    h1 {
+    header {
+      background: #000;
+      padding: 20px;
       text-align: center;
-      color: #00ffe0;
+      font-size: 1.8em;
+      font-weight: bold;
+      color: #00ffc8;
+    }
+    main {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 20px;
     }
     input, select, button {
       width: 100%;
       padding: 12px;
       margin: 10px 0;
-      border-radius: 8px;
       border: none;
-      font-size: 14px;
+      border-radius: 10px;
+      font-size: 15px;
     }
     button {
       background: #00c853;
-      color: white;
-      cursor: pointer;
+      color: #fff;
       font-weight: bold;
+      cursor: pointer;
     }
     .movie-list {
-      margin-top: 30px;
+      margin-top: 40px;
     }
     .movie-card {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 12px;
-      border-radius: 12px;
-      margin-bottom: 15px;
       display: flex;
-      align-items: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
     .movie-card img {
-      width: 100px;
-      height: 80px;
-      object-fit: cover;
+      width: 90px;
+      height: 70px;
       border-radius: 8px;
+      object-fit: cover;
       margin-right: 15px;
     }
     .movie-details {
       flex: 1;
     }
-    #status {
-      text-align: center;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-    .toast {
+    #dialog {
       position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #222;
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 20px;
-      font-weight: bold;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
       display: none;
-      z-index: 1000;
-    }
-    .dialog {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(0,0,0,0.6);
-      display: flex;
-      align-items: center;
       justify-content: center;
-      z-index: 2000;
-      display: none;
+      align-items: center;
+      z-index: 999;
     }
     .dialog-box {
-      background: #111;
-      padding: 24px;
-      border-radius: 16px;
+      background: #222;
+      padding: 20px 30px;
+      border-radius: 15px;
       text-align: center;
-      color: #00ffcc;
+      color: #00ffc8;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    }
+    .dialog-box button {
+      margin-top: 20px;
+      background: #00c853;
     }
   </style>
 </head>
 <body>
+  <header>🎬 Admin Panel - Upload Movie</header>
+  <main>
+    <input type="text" id="title" placeholder="🎬 Movie Title">
+    <input type="text" id="size" placeholder="💾 Size (e.g. 700MB)">
+    <input type="text" id="quality" placeholder="🎥 Quality (e.g. 1080p)">
+    <select id="category">
+      <option value="Bollywood">Bollywood</option>
+      <option value="South">South</option>
+      <option value="Web Series">Web Series</option>
+      <option value="Dual Audio">Dual Audio</option>
+    </select>
+    <input type="file" id="image" accept="image/*">
+    <input type="file" id="video" accept="video/*">
+    <button onclick="uploadMovie()">⬆ Upload</button>
 
-<h1>📤 Upload Movie to Firebase</h1>
+    <div class="movie-list" id="movieList">
+      <h2>📋 Uploaded Movies</h2>
+    </div>
+  </main>
 
-<input type="text" id="title" placeholder="🎬 Movie Title">
-<input type="text" id="size" placeholder="💾 Size (e.g. 700MB)">
-<input type="text" id="quality" placeholder="🎥 Quality (e.g. 1080p)">
-<select id="category">
-  <option value="Bollywood">Bollywood</option>
-  <option value="South">South</option>
-  <option value="Web Series">Web Series</option>
-  <option value="Dual Audio">Dual Audio</option>
-</select>
-<input type="text" id="imageUrl" placeholder="🖼 Paste image URL">
-<input type="text" id="videoUrl" placeholder="🎬 Paste video URL">
-<button onclick="uploadMovie()">⬆ Upload</button>
-<p id="status"></p>
-
-<div class="movie-list" id="movieList">
-  <h2>📋 Uploaded Movies</h2>
-</div>
-<div id="toast" class="toast"></div>
-<div id="dialog" class="dialog">
-  <div class="dialog-box">
-    ✅ Movie uploaded successfully!
-    <br><br>
-    <button onclick="closeDialog()">OK</button>
+  <div id="dialog">
+    <div class="dialog-box">
+      ✅ Movie uploaded successfully!
+      <br>
+      <button onclick="hideDialog()">OK</button>
+    </div>
   </div>
-</div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAOJ4Ye2PmNA9DykjWX4hvFYhjKg0pZuQM",
-    authDomain: "new-wala-app.firebaseapp.com",
-    databaseURL: "https://new-wala-app-default-rtdb.firebaseio.com",
-    projectId: "new-wala-app",
-    storageBucket: "new-wala-app.appspot.com",
-    messagingSenderId: "443237566876",
-    appId: "1:443237566876:web:your_app_id_here"
-  };
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAOJ4Ye2PmNA9DykjWX4hvFYhjKg0pZuQM",
+      authDomain: "new-wala-app.firebaseapp.com",
+      databaseURL: "https://new-wala-app-default-rtdb.firebaseio.com",
+      projectId: "new-wala-app",
+      storageBucket: "new-wala-app.appspot.com",
+      messagingSenderId: "443237566876",
+      appId: "1:443237566876:web:your_app_id_here"
+    };
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const storage = firebase.storage();
 
-  function showToast(message) {
-    const toast = document.getElementById('toast');
-    toast.innerText = message;
-    toast.style.display = 'block';
-    setTimeout(() => toast.style.display = 'none', 4000);
-  }
-
-  function openDialog() {
-    document.getElementById('dialog').style.display = 'flex';
-  }
-
-  function closeDialog() {
-    document.getElementById('dialog').style.display = 'none';
-  }
-
-  async function uploadMovie() {
-    const title = document.getElementById('title').value;
-    const size = document.getElementById('size').value;
-    const quality = document.getElementById('quality').value;
-    const category = document.getElementById('category').value;
-    const imageUrl = document.getElementById('imageUrl').value;
-    const videoUrl = document.getElementById('videoUrl').value;
-    const status = document.getElementById('status');
-
-    if (!title || !imageUrl || !videoUrl) {
-      status.textContent = "❌ Please fill all fields and paste valid URLs.";
-      return;
+    function showDialog() {
+      document.getElementById('dialog').style.display = 'flex';
     }
 
-    status.textContent = "⏳ Uploading to database...";
-    showToast("Uploading movie...");
-
-    try {
-      await db.ref('/movies').push({
-        title: title,
-        size: size,
-        quality: quality,
-        category: category,
-        imageUrl: imageUrl,
-        videoUrl: videoUrl
-      });
-
-      status.textContent = "✅ Movie uploaded successfully!";
-      openDialog();
-      document.querySelectorAll('input').forEach(e => e.value = '');
-    } catch (err) {
-      console.error(err);
-      status.textContent = "❌ Error: " + err.message;
-      showToast("❌ Upload failed");
+    function hideDialog() {
+      document.getElementById('dialog').style.display = 'none';
     }
-  }
 
-  db.ref('/movies').on('value', (snapshot) => {
-    const data = snapshot.val();
-    const movieList = document.getElementById('movieList');
-    movieList.innerHTML = '<h2>📋 Uploaded Movies</h2>';
-    if (data) {
-      Object.values(data).forEach((movie) => {
-        movieList.innerHTML += `
-          <div class="movie-card">
-            <img src="${movie.imageUrl}" alt="${movie.title}">
-            <div class="movie-details">
-              <h3>${movie.title}</h3>
-              <p>🎞 ${movie.quality} | 💾 ${movie.size} | 🏷 ${movie.category}</p>
+    async function uploadMovie() {
+      const title = document.getElementById('title').value;
+      const size = document.getElementById('size').value;
+      const quality = document.getElementById('quality').value;
+      const category = document.getElementById('category').value;
+      const imageFile = document.getElementById('image').files[0];
+      const videoFile = document.getElementById('video').files[0];
+
+      if (!title || !imageFile || !videoFile) {
+        alert("❌ Please fill all fields and select files.");
+        return;
+      }
+
+      try {
+        const imageRef = storage.ref('images/' + Date.now() + '_' + imageFile.name);
+        const videoRef = storage.ref('videos/' + Date.now() + '_' + videoFile.name);
+
+        await imageRef.put(imageFile);
+        const imageUrl = await imageRef.getDownloadURL();
+
+        await videoRef.put(videoFile);
+        const videoUrl = await videoRef.getDownloadURL();
+
+        await db.ref('/movies').push({
+          title,
+          size,
+          quality,
+          category,
+          imageUrl,
+          videoUrl
+        });
+
+        document.querySelectorAll('input').forEach(e => e.value = '');
+        showDialog();
+      } catch (err) {
+        alert("❌ Upload failed: " + err.message);
+      }
+    }
+
+    db.ref('/movies').on('value', (snapshot) => {
+      const data = snapshot.val();
+      const movieList = document.getElementById('movieList');
+      movieList.innerHTML = '<h2>📋 Uploaded Movies</h2>';
+      if (data) {
+        Object.values(data).forEach((movie) => {
+          movieList.innerHTML += `
+            <div class="movie-card">
+              <img src="${movie.imageUrl}" alt="${movie.title}">
+              <div class="movie-details">
+                <h3>${movie.title}</h3>
+                <p>🎞 ${movie.quality} | 💾 ${movie.size} | 🏷 ${movie.category}</p>
+              </div>
             </div>
-          </div>
-        `;
-      });
-    } else {
-      movieList.innerHTML += '<p>No movies uploaded yet.</p>';
-    }
-  });
-</script>
+          `;
+        });
+      } else {
+        movieList.innerHTML += '<p>No movies uploaded yet.</p>';
+      }
+    });
+  </script>
 </body>
 </html>
