@@ -1,80 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎬 Filmy4Wap - Latest Movies</title>
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      margin: 0;
-      background: linear-gradient(to right, #001f3f, #0074D9);
-      color: #fff;
-    }
-    header {
-      text-align: center;
-      padding: 20px;
-      background: #001f3f;
-      color: #7FDBFF;
-      font-size: 1.5em;
-      font-weight: bold;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 20px;
-      padding: 20px;
-    }
-    .card {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-      transition: transform 0.3s;
-    }
-    .card:hover {
-      transform: scale(1.05);
-    }
-    .card img {
-      width: 100%;
-      height: 160px;
-      object-fit: cover;
-    }
-    .card-content {
-      padding: 15px;
-    }
-    .card h3 {
-      margin: 0;
-      font-size: 18px;
-    }
-    .card p {
-      font-size: 14px;
-      margin-top: 8px;
-      color: #cceeff;
-    }
-    .card a {
-      display: inline-block;
-      margin-top: 10px;
-      color: #7FDBFF;
-      text-decoration: underline;
-    }
-    .loading {
-      text-align: center;
-      padding: 40px;
-      font-size: 18px;
-      color: #7FDBFF;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🎥 MovieZone - Push Notification</title>
 </head>
-<body>
-  <header>🎬 Filmy4Wap - Latest Movies</header>
-  <div id="movieGrid" class="grid"></div>
-  <div id="loading" class="loading">Loading movies...</div>
+<body style="font-family:sans-serif; background:#111; color:white; text-align:center; padding:50px;">
 
+  <h1>🎬 MovieZone Notification Demo</h1>
+  <p>Click below to enable push notifications!</p>
+  <button onclick="initPush()">🔔 Enable Notifications</button>
+  <p id="token" style="word-break: break-all; padding:20px; background:#222; margin-top:20px; display:none;"></p>
+
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <script>
+    // ✅ Your Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAOJ4Ye2PmNA9DykjWX4hvFYhjKg0pZuQM",
       authDomain: "new-wala-app.firebaseapp.com",
@@ -85,34 +29,34 @@
       appId: "1:443237566876:web:your_app_id_here"
     };
 
+    // 🔥 Initialize Firebase
     firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
     const db = firebase.database();
 
-    const movieGrid = document.getElementById('movieGrid');
-    const loading = document.getElementById('loading');
+    // 🔔 Initialize Push
+    function initPush() {
+      messaging.requestPermission()
+        .then(() => messaging.getToken())
+        .then(token => {
+          console.log("📲 Token:", token);
+          document.getElementById("token").innerText = "Your Token:\n" + token;
+          document.getElementById("token").style.display = "block";
 
-    db.ref('/movies').once('value', (snapshot) => {
-      const data = snapshot.val();
-      movieGrid.innerHTML = '';
-      if (data) {
-        Object.values(data).forEach(movie => {
-          const div = document.createElement('div');
-          div.className = 'card';
-          div.innerHTML = `
-            <img src="${movie.imageUrl}" alt="${movie.title}" />
-            <div class="card-content">
-              <h3>${movie.title}</h3>
-              <p>🎞 ${movie.quality} | 💾 ${movie.size} | 🏷 ${movie.category}</p>
-              <a href="movie.html?id=${encodeURIComponent(movie.title)}">Watch / Download</a>
-            </div>
-          `;
-          movieGrid.appendChild(div);
+          // Optional: Save to DB
+          db.ref("tokens").push({ token: token });
+        })
+        .catch(err => {
+          alert("❌ Permission Blocked: " + err);
         });
-        loading.style.display = 'none';
-      } else {
-        loading.innerText = 'No movies found.';
-      }
+    }
+
+    // 🔴 Show Notification While Page is Open
+    messaging.onMessage(payload => {
+      console.log("📩 Message Received: ", payload);
+      alert(`📢 ${payload.notification.title}\n${payload.notification.body}`);
     });
   </script>
+
 </body>
 </html>
