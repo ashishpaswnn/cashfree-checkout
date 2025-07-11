@@ -8,142 +8,162 @@
     body {
       font-family: 'Poppins', sans-serif;
       margin: 0;
-      background: linear-gradient(to right, #001f3f, #0074D9);
-      color: #fff;
-      padding-bottom: 70px;
+      background: #0f0f1a;
+      color: #ffffff;
+      padding-bottom: 80px;
     }
     header {
       text-align: center;
-      padding: 20px;
-      background: #001f3f;
-      color: #7FDBFF;
-      font-size: 1.5em;
+      padding: 25px 10px;
+      background: linear-gradient(90deg, #1e3c72, #2a5298);
+      color: #ffffff;
+      font-size: 1.7em;
       font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
     }
     .search-box {
-      margin: 10px 20px;
+      margin: 15px;
       display: flex;
       justify-content: center;
+      position: sticky;
+      top: 0;
+      background: #0f0f1a;
+      z-index: 999;
     }
     .search-box input {
       width: 100%;
-      max-width: 500px;
-      padding: 10px;
+      max-width: 480px;
+      padding: 12px;
       font-size: 16px;
-      border: none;
-      border-radius: 8px;
+      border-radius: 12px;
+      border: 1px solid #444;
+      background: #1b1b2f;
+      color: #fff;
       outline: none;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      transition: 0.3s;
+    }
+    .search-box input:focus {
+      border-color: #00c6ff;
+      box-shadow: 0 0 10px #00c6ff50;
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
       padding: 20px;
     }
     .card {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 15px;
+      background: #1a1a2e;
+      border-radius: 14px;
       overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-      transition: transform 0.3s;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s, box-shadow 0.3s;
     }
     .card:hover {
-      transform: scale(1.05);
+      transform: translateY(-5px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
     }
     .card img {
       width: 100%;
-      height: 160px;
+      height: 180px;
       object-fit: cover;
     }
     .card-content {
-      padding: 15px;
+      padding: 12px;
     }
     .card h3 {
       margin: 0;
-      font-size: 16px;
+      font-size: 15px;
     }
     .card p {
       font-size: 13px;
-      margin-top: 8px;
+      margin: 5px 0;
       color: #cceeff;
     }
     .card a {
-      display: inline-block;
-      margin-top: 10px;
-      color: #7FDBFF;
+      color: #00d9ff;
+      font-size: 13px;
       text-decoration: underline;
-    }
-    .loading {
-      text-align: center;
-      padding: 40px;
-      font-size: 18px;
-      color: #7FDBFF;
     }
     .bottom-nav {
       position: fixed;
       bottom: 0;
       left: 0;
       width: 100%;
-      background: #001f3f;
       display: flex;
       justify-content: space-around;
-      padding: 10px 0;
-      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.5);
+      background: linear-gradient(to right, #1a1a2e, #16213e);
+      padding: 12px 0;
+      border-top: 1px solid #333;
+      animation: slideUp 0.4s ease-in-out;
     }
     .bottom-nav .nav-item {
-      color: #fff;
-      text-align: center;
-      transition: transform 0.3s, font-size 0.3s;
+      color: #ccc;
       font-size: 14px;
+      transition: 0.3s;
       cursor: pointer;
+      transform: scale(1);
     }
     .bottom-nav .nav-item.active {
-      transform: scale(1.3);
-      font-size: 16px;
       color: #00ffff;
+      transform: scale(1.2);
+      font-weight: bold;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
     }
     .ads-blocked {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: #000c;
+      background: #000a;
       display: flex;
       justify-content: center;
       align-items: center;
+      flex-direction: column;
       color: #fff;
       font-size: 18px;
       z-index: 9999;
-      flex-direction: column;
       text-align: center;
+    }
+    #loadingPopup {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9998;
+    }
+    .loader {
+      border: 6px solid #333;
+      border-top: 6px solid #00ffff;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
+  <div id="loadingPopup"><div class="loader"></div></div>
   <header>🎬 Filmy4Wap - Media Library</header>
-  <div id="top-banner-ad" style="width:100%;text-align:center;margin:10px 0;">
-    <!-- Monetag Ad Script Paste Here -->
-
-  
-  </div>
   <div class="search-box">
-    <input type="text" id="searchInput" placeholder="Search movies..." oninput="filterMovies()" />
+    <input type="text" id="searchInput" placeholder="Search movies..." oninput="filterMovies()">
   </div>
   <div id="movieGrid" class="grid"></div>
-  <div id="loading" class="loading">Loading movies...</div>
   <div id="adblockMessage" class="ads-blocked" style="display:none;">
     ⚠️ Please disable Ad Blocker to access this website.
   </div>
 
   <div class="bottom-nav">
-    <div class="nav-item active" onclick="setActive(this); loadContent('movies')">Movies</div>
-    <div class="nav-item" onclick="setActive(this); loadContent('webseries')">Web Series</div>
-    <div class="nav-item" onclick="setActive(this); loadContent('adult')">18+</div>
-  </div>
-
-  <div id="bottom-sticky-ad" style="position:fixed;bottom:60px;width:100%;text-align:center;z-index:9999;">
-    <!-- Monetag Ad Script Paste Here -->
-
-  
+    <div class="nav-item active" onclick="setActive(this); loadContent('movies')">🎬 Movies</div>
+    <div class="nav-item" onclick="setActive(this); loadContent('webseries')">📺 Web Series</div>
+    <div class="nav-item" onclick="setActive(this); loadContent('adult')">🔞 18+</div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -161,17 +181,17 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const movieGrid = document.getElementById('movieGrid');
-    const loading = document.getElementById('loading');
+    const loadingPopup = document.getElementById('loadingPopup');
     let allMovies = [];
 
     function loadContent(category) {
       movieGrid.innerHTML = '';
-      loading.style.display = 'block';
+      loadingPopup.style.display = 'flex';
       db.ref('/' + category).once('value', (snapshot) => {
         const data = snapshot.val();
         allMovies = data ? Object.values(data) : [];
         renderMovies(allMovies);
-        loading.style.display = 'none';
+        loadingPopup.style.display = 'none';
       });
     }
 
@@ -181,7 +201,7 @@
         movieGrid.innerHTML = '<div class="loading">No content found.</div>';
         return;
       }
-      movies.forEach((movie, index) => {
+      movies.forEach(movie => {
         const div = document.createElement('div');
         div.className = 'card';
         div.innerHTML = `
@@ -193,17 +213,6 @@
           </div>
         `;
         movieGrid.appendChild(div);
-
-        if ((index + 1) % 4 === 0) {
-          const ad = document.createElement('div');
-          ad.innerHTML = `
-            <div style="text-align:center;margin:10px 0;">
-        
-   
-              </div>
-          `;
-          movieGrid.appendChild(ad);
-        }
       });
     }
 
