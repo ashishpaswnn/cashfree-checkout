@@ -1,67 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🎬 Media Library</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
     body {
       font-family: 'Poppins', sans-serif;
-      margin: 0;
-      background: #0f0f1a;
+      background: #0d0d1b;
       color: #ffffff;
       padding-bottom: 80px;
     }
     header {
       text-align: center;
       padding: 25px 10px;
-      background: linear-gradient(90deg, #1e3c72, #2a5298);
+      background: linear-gradient(to right, #00c6ff, #0072ff);
       color: #ffffff;
-      font-size: 1.7em;
+      font-size: 2em;
       font-weight: bold;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
     }
     .search-box {
-      margin: 15px;
+      margin: 20px 16px 10px;
       display: flex;
       justify-content: center;
       position: sticky;
       top: 0;
-      background: #0f0f1a;
+      background: #0d0d1b;
       z-index: 999;
     }
     .search-box input {
       width: 100%;
-      max-width: 480px;
-      padding: 12px;
+      max-width: 500px;
+      padding: 14px 20px;
+      border-radius: 14px;
       font-size: 16px;
-      border-radius: 12px;
-      border: 1px solid #444;
+      border: none;
+      outline: none;
       background: #1b1b2f;
       color: #fff;
-      outline: none;
-      transition: 0.3s;
+      box-shadow: 0 0 8px #00c6ff30;
+      transition: 0.4s ease;
     }
     .search-box input:focus {
-      border-color: #00c6ff;
-      box-shadow: 0 0 10px #00c6ff50;
+      box-shadow: 0 0 16px #00ffff70;
+      border: 1px solid #00ffff;
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
       padding: 20px;
     }
     .card {
-      background: #1a1a2e;
-      border-radius: 14px;
+      background: #13132a;
+      border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-      transition: transform 0.3s, box-shadow 0.3s;
+      box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
+      transition: 0.3s ease;
     }
     .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 8px 30px rgba(0, 255, 255, 0.3);
     }
     .card img {
       width: 100%;
@@ -69,19 +76,20 @@
       object-fit: cover;
     }
     .card-content {
-      padding: 12px;
+      padding: 12px 16px;
     }
     .card h3 {
-      margin: 0;
-      font-size: 15px;
+      font-size: 16px;
+      margin-bottom: 5px;
     }
     .card p {
       font-size: 13px;
-      margin: 5px 0;
       color: #cceeff;
     }
     .card a {
-      color: #00d9ff;
+      display: inline-block;
+      margin-top: 8px;
+      color: #00ffff;
       font-size: 13px;
       text-decoration: underline;
     }
@@ -92,22 +100,22 @@
       width: 100%;
       display: flex;
       justify-content: space-around;
-      background: linear-gradient(to right, #1a1a2e, #16213e);
+      background: rgba(26, 26, 46, 0.9);
+      backdrop-filter: blur(10px);
       padding: 12px 0;
       border-top: 1px solid #333;
       animation: slideUp 0.4s ease-in-out;
     }
     .bottom-nav .nav-item {
-      color: #ccc;
+      color: #aaa;
       font-size: 14px;
       transition: 0.3s;
       cursor: pointer;
-      transform: scale(1);
     }
     .bottom-nav .nav-item.active {
       color: #00ffff;
-      transform: scale(1.2);
-      font-weight: bold;
+      font-weight: 600;
+      text-shadow: 0 0 5px #00ffff80;
     }
     @keyframes slideUp {
       from { transform: translateY(100%); }
@@ -129,22 +137,22 @@
     #loadingPopup {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.6);
       display: none;
       justify-content: center;
       align-items: center;
       z-index: 9998;
     }
     .loader {
-      border: 6px solid #333;
-      border-top: 6px solid #00ffff;
-      border-radius: 50%;
       width: 60px;
       height: 60px;
-      animation: spin 1s linear infinite;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #00c6ff, #0072ff);
+      animation: rotate 1.2s linear infinite;
+      mask-image: radial-gradient(circle, #0000 40%, #000 41%);
     }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
+    @keyframes rotate {
+      0% { transform: rotate(0); }
       100% { transform: rotate(360deg); }
     }
   </style>
@@ -198,7 +206,7 @@
     function renderMovies(movies) {
       movieGrid.innerHTML = '';
       if (movies.length === 0) {
-        movieGrid.innerHTML = '<div class="loading">No content found.</div>';
+        movieGrid.innerHTML = '<div style="padding:20px;">No content found.</div>';
         return;
       }
       movies.forEach(movie => {
@@ -227,6 +235,7 @@
       el.classList.add('active');
     }
 
+    // Adblock Detection
     setTimeout(() => {
       const ad = document.createElement('div');
       ad.className = 'adsbox';
