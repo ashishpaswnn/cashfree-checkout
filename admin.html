@@ -3,171 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎬 Admin Upload Panel</title>
+  <title>🎧 Admin Upload Panel</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
   <style>
     body {
       font-family: 'Poppins', sans-serif;
-      margin: 0;
-      background: #0a0a0a;
-      color: #fff;
-      padding-bottom: 80px;
-    }
-    h1 {
-      text-align: center;
-      background: #001f3f;
-      padding: 20px;
-      margin: 0;
-      color: #00ffff;
-    }
-    .form-container {
-      padding: 20px;
-      background: #111;
-      margin: 20px;
-      border-radius: 12px;
-    }
-    input, select {
-      display: block;
-      width: 100%;
-      margin-bottom: 10px;
-      padding: 10px;
-      font-size: 14px;
-      border-radius: 6px;
-      border: none;
-    }
-    button {
-      padding: 12px;
-      width: 100%;
-      background: #00c853;
-      color: #fff;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 20px;
-      padding: 20px;
-    }
-    .card {
-      background: #1a1a1a;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    }
-    .card img {
-      width: 100%;
-      height: 120px;
-      object-fit: cover;
-    }
-    .card .info {
-      padding: 10px;
-      font-size: 13px;
-    }
-    .card .actions {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px;
-    }
-    .card .actions button {
-      padding: 6px 10px;
-      background: #ff5252;
-      border: none;
-      border-radius: 6px;
+      background: #121212;
       color: white;
-      cursor: pointer;
+      padding: 20px;
     }
-    #toast {
-      visibility: hidden;
-      min-width: 250px;
-      background-color: #333;
-      color: #fff;
-      text-align: center;
+    input, button {
+      display: block;
+      margin-bottom: 15px;
+      padding: 10px;
+      width: 100%;
+      max-width: 500px;
+    }
+    label {
+      font-weight: bold;
+    }
+    .success {
+      color: #1db954;
+      margin-top: 10px;
+    }
+    .song-card {
+      background: #1e1e1e;
+      padding: 15px;
       border-radius: 10px;
-      padding: 16px;
-      position: fixed;
-      z-index: 1;
-      left: 50%;
-      bottom: 30px;
-      transform: translateX(-50%);
-      font-size: 14px;
+      margin-top: 20px;
     }
-    #toast.show {
-      visibility: visible;
-      animation: fadein 0.5s, fadeout 0.5s 2.5s;
-    }
-    @keyframes fadein {
-      from { bottom: 0; opacity: 0; }
-      to { bottom: 30px; opacity: 1; }
-    }
-    @keyframes fadeout {
-      from { bottom: 30px; opacity: 1; }
-      to { bottom: 0; opacity: 0; }
-    }
-    #preview {
-      max-width: 100%;
-      height: auto;
-      margin-bottom: 10px;
+    .song-card img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
       border-radius: 8px;
+      margin-bottom: 10px;
     }
-    #progressDialog {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.8);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-      display: none;
-    }
-    #progressDialog .box {
-      background: #222;
-      padding: 30px;
-      border-radius: 12px;
-      text-align: center;
-      color: #00ffff;
+    .controls button {
+      margin-right: 10px;
+      padding: 6px 12px;
     }
   </style>
 </head>
 <body>
-  <h1>🎬 Admin Upload Panel</h1>
+  <h2>🎧 Upload New Song</h2>
+  <label>Song Title</label>
+  <input type="text" id="title">
 
-  <div id="adminPanel">
-    <div class="form-container">
-      <select id="category">
-        <option value="movies">Movies</option>
-        <option value="webseries">Web Series</option>
-        <option value="adult">18+</option>
-      </select>
-      <input type="text" id="title" placeholder="Title">
-      <input type="text" id="quality" placeholder="Quality">
-      <input type="text" id="size" placeholder="Size">
+  <label>Artist Name</label>
+  <input type="text" id="artist">
 
-      <input type="file" id="imageFile" accept="image/*" onchange="previewImage(event)">
-      <input type="text" id="imageLink" placeholder="or paste Image URL">
-      <img id="preview" style="display:none">
+  <label>Thumbnail Image</label>
+  <input type="file" id="thumbnail">
 
-      <input type="file" id="videoFile" accept="video/*">
-      <input type="text" id="videoLink" placeholder="or paste Video URL">
+  <label>MP3 File</label>
+  <input type="file" id="audio">
 
-      <button onclick="uploadMovie()">Upload</button>
-    </div>
+  <button onclick="uploadSong()">Upload</button>
+  <p class="success" id="msg"></p>
 
-    <div id="movieGrid" class="grid"></div>
-  </div>
+  <hr style="margin: 30px 0;">
 
-  <div id="toast">✅ Movie Uploaded Successfully!</div>
-  <div id="progressDialog">
-    <div class="box">
-      <h3>Uploading...</h3>
-      <p id="progressText">0%</p>
-    </div>
-  </div>
+  <h3>📜 Uploaded Songs</h3>
+  <div id="songList"></div>
 
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAOJ4Ye2PmNA9DykjWX4hvFYhjKg0pZuQM",
@@ -176,118 +77,94 @@
       projectId: "new-wala-app",
       storageBucket: "new-wala-app.appspot.com",
       messagingSenderId: "443237566876",
-      appId: "1:443237566876:web:your_app_id_here"
+      appId: "1:443237566876:android:c9bc3a6525f3152bf2a059"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const storage = firebase.storage();
 
-    function showToast(message) {
-      const toast = document.getElementById("toast");
-      toast.innerText = message;
-      toast.className = "show";
-      setTimeout(() => {
-        toast.className = toast.className.replace("show", "");
-      }, 3000);
+    async function uploadSong() {
+      const title = document.getElementById('title').value;
+      const artist = document.getElementById('artist').value;
+      const thumbFile = document.getElementById('thumbnail').files[0];
+      const audioFile = document.getElementById('audio').files[0];
+
+      if (!title || !artist || !thumbFile || !audioFile) {
+        alert("Please fill all fields and select files.");
+        return;
+      }
+
+      const id = Date.now().toString();
+
+      const thumbRef = storage.ref("songs_thumbnails/" + id + ".jpg");
+      const audioRef = storage.ref("songs_mp3/" + id + ".mp3");
+
+      const thumbSnap = await thumbRef.put(thumbFile);
+      const audioSnap = await audioRef.put(audioFile);
+
+      const thumbUrl = await thumbSnap.ref.getDownloadURL();
+      const audioUrl = await audioSnap.ref.getDownloadURL();
+
+      await db.ref("songs/" + id).set({
+        title: title,
+        artist: artist,
+        thumbnail: thumbUrl,
+        url: audioUrl
+      });
+
+      document.getElementById('msg').innerText = "✅ Song uploaded successfully!";
+      document.getElementById('title').value = "";
+      document.getElementById('artist').value = "";
+      document.getElementById('thumbnail').value = null;
+      document.getElementById('audio').value = null;
     }
 
-    function previewImage(event) {
-      const preview = document.getElementById("preview");
-      preview.src = URL.createObjectURL(event.target.files[0]);
-      preview.style.display = "block";
-    }
+    function loadSongs() {
+      const list = document.getElementById('songList');
+      db.ref("songs").on("value", function(snapshot) {
+        list.innerHTML = "";
+        snapshot.forEach(function(child) {
+          const data = child.val();
+          const id = child.key;
 
-    function uploadMovie() {
-      const title = document.getElementById("title").value;
-      const quality = document.getElementById("quality").value;
-      const size = document.getElementById("size").value;
-      const imageFile = document.getElementById("imageFile").files[0];
-      const videoFile = document.getElementById("videoFile").files[0];
-      const imageLink = document.getElementById("imageLink").value;
-      const videoLink = document.getElementById("videoLink").value;
-      const category = document.getElementById("category").value;
-
-      if (!title || (!imageFile && !imageLink) || (!videoFile && !videoLink)) {
-        return showToast("⚠️ Title, Image and Video required");
-      }
-
-      document.getElementById("progressDialog").style.display = "flex";
-
-      const uploadImage = imageFile ? storage.ref(`images/${imageFile.name}`).put(imageFile) : Promise.resolve(null);
-      const uploadVideo = videoFile ? storage.ref(`videos/${videoFile.name}`).put(videoFile) : Promise.resolve(null);
-
-      if (imageFile) {
-        uploadImage.on('state_changed', (snapshot) => {
-          const percent = Math.floor((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-          document.getElementById("progressText").innerText = `Image: ${percent}%`;
-        });
-      }
-      if (videoFile) {
-        uploadVideo.on('state_changed', (snapshot) => {
-          const percent = Math.floor((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-          document.getElementById("progressText").innerText = `Video: ${percent}%`;
-        });
-      }
-
-      Promise.all([uploadImage, uploadVideo]).then(async ([imgSnap, vidSnap]) => {
-        const imageUrl = imageFile ? await imgSnap.ref.getDownloadURL() : imageLink;
-        const videoUrl = videoFile ? await vidSnap.ref.getDownloadURL() : videoLink;
-
-        const data = { title, quality, size, imageUrl, videoUrl, category };
-        db.ref(`/${category}`).push(data, () => {
-          showToast("✅ Movie Uploaded Successfully!");
-          document.getElementById("progressDialog").style.display = "none";
-          loadMovies();
+          const div = document.createElement('div');
+          div.className = 'song-card';
+          div.innerHTML = `
+            <img src="${data.thumbnail}" alt="Thumbnail">
+            <h4>${data.title}</h4>
+            <p>${data.artist}</p>
+            <audio controls src="${data.url}"></audio>
+            <div class="controls">
+              <button onclick="editSong('${id}', '${data.title}', '${data.artist}')">✏️ Edit</button>
+              <button onclick="deleteSong('${id}')">🗑️ Delete</button>
+            </div>
+          `;
+          list.appendChild(div);
         });
       });
     }
 
-    function deleteMovie(category, key) {
-      db.ref(`/${category}/${key}`).remove(() => {
-        showToast("🗑️ Movie Deleted");
-        loadMovies();
-      });
+    function deleteSong(id) {
+      if (confirm("Are you sure to delete this song?")) {
+        db.ref("songs/" + id).remove();
+        alert("Deleted successfully.");
+      }
     }
 
-    function editMovie(category, key, item) {
-      document.getElementById("title").value = item.title;
-      document.getElementById("quality").value = item.quality;
-      document.getElementById("size").value = item.size;
-      document.getElementById("category").value = category;
+    function editSong(id, oldTitle, oldArtist) {
+      const newTitle = prompt("Enter new title:", oldTitle);
+      const newArtist = prompt("Enter new artist:", oldArtist);
+      if (newTitle && newArtist) {
+        db.ref("songs/" + id).update({
+          title: newTitle,
+          artist: newArtist
+        });
+        alert("Updated successfully.");
+      }
     }
 
-    function loadMovies() {
-      const category = document.getElementById("category").value;
-      const grid = document.getElementById("movieGrid");
-      grid.innerHTML = '<div class="loading">Loading...</div>';
-      db.ref(`/${category}`).once('value', (snapshot) => {
-        const data = snapshot.val();
-        grid.innerHTML = '';
-        if (data) {
-          Object.entries(data).forEach(([key, item]) => {
-            const div = document.createElement('div');
-            div.className = 'card';
-            div.innerHTML = `
-              <img src="${item.imageUrl}" alt="${item.title}">
-              <div class="info">
-                <strong>${item.title}</strong><br>
-                ${item.quality} | ${item.size}
-              </div>
-              <div class="actions">
-                <button onclick='editMovie("${category}", "${key}", ${JSON.stringify(item)})'>Edit</button>
-                <button onclick='deleteMovie("${category}", "${key}")'>Delete</button>
-              </div>
-            `;
-            grid.appendChild(div);
-          });
-        } else {
-          grid.innerHTML = '<div class="loading">No content found.</div>';
-        }
-      });
-    }
-
-    document.getElementById("category").addEventListener("change", loadMovies);
-    window.onload = loadMovies;
+    window.onload = loadSongs;
   </script>
 </body>
 </html>
