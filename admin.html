@@ -1,170 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎧 Admin Upload Panel</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: #121212;
-      color: white;
-      padding: 20px;
-    }
-    input, button {
-      display: block;
-      margin-bottom: 15px;
-      padding: 10px;
-      width: 100%;
-      max-width: 500px;
-    }
-    label {
-      font-weight: bold;
-    }
-    .success {
-      color: #1db954;
-      margin-top: 10px;
-    }
-    .song-card {
-      background: #1e1e1e;
-      padding: 15px;
-      border-radius: 10px;
-      margin-top: 20px;
-    }
-    .song-card img {
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 8px;
-      margin-bottom: 10px;
-    }
-    .controls button {
-      margin-right: 10px;
-      padding: 6px 12px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Upload Songs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"></script>
+    <style>
+        body {
+            background: linear-gradient(45deg, #1a202c, #2d3748, #4a5568);
+            background-size: 400%;
+            animation: gradient 15s ease infinite;
+            min-height: 100vh;
+            color: white;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .admin-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
 </head>
-<body>
-  <h2>🎧 Upload New Song</h2>
-  <label>Song Title</label>
-  <input type="text" id="title">
-
-  <label>Artist Name</label>
-  <input type="text" id="artist">
-
-  <label>Thumbnail Image</label>
-  <input type="file" id="thumbnail">
-
-  <label>MP3 File</label>
-  <input type="file" id="audio">
-
-  <button onclick="uploadSong()">Upload</button>
-  <p class="success" id="msg"></p>
-
-  <hr style="margin: 30px 0;">
-
-  <h3>📜 Uploaded Songs</h3>
-  <div id="songList"></div>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAOJ4Ye2PmNA9DykjWX4hvFYhjKg0pZuQM",
-      authDomain: "new-wala-app.firebaseapp.com",
-      databaseURL: "https://new-wala-app-default-rtdb.firebaseio.com",
-      projectId: "new-wala-app",
-      storageBucket: "new-wala-app.appspot.com",
-      messagingSenderId: "443237566876",
-      appId: "1:443237566876:android:c9bc3a6525f3152bf2a059"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const storage = firebase.storage();
-
-    async function uploadSong() {
-      const title = document.getElementById('title').value;
-      const artist = document.getElementById('artist').value;
-      const thumbFile = document.getElementById('thumbnail').files[0];
-      const audioFile = document.getElementById('audio').files[0];
-
-      if (!title || !artist || !thumbFile || !audioFile) {
-        alert("Please fill all fields and select files.");
-        return;
-      }
-
-      const id = Date.now().toString();
-
-      const thumbRef = storage.ref("songs_thumbnails/" + id + ".jpg");
-      const audioRef = storage.ref("songs_mp3/" + id + ".mp3");
-
-      const thumbSnap = await thumbRef.put(thumbFile);
-      const audioSnap = await audioRef.put(audioFile);
-
-      const thumbUrl = await thumbSnap.ref.getDownloadURL();
-      const audioUrl = await audioSnap.ref.getDownloadURL();
-
-      await db.ref("songs/" + id).set({
-        title: title,
-        artist: artist,
-        thumbnail: thumbUrl,
-        url: audioUrl
-      });
-
-      document.getElementById('msg').innerText = "✅ Song uploaded successfully!";
-      document.getElementById('title').value = "";
-      document.getElementById('artist').value = "";
-      document.getElementById('thumbnail').value = null;
-      document.getElementById('audio').value = null;
-    }
-
-    function loadSongs() {
-      const list = document.getElementById('songList');
-      db.ref("songs").on("value", function(snapshot) {
-        list.innerHTML = "";
-        snapshot.forEach(function(child) {
-          const data = child.val();
-          const id = child.key;
-
-          const div = document.createElement('div');
-          div.className = 'song-card';
-          div.innerHTML = `
-            <img src="${data.thumbnail}" alt="Thumbnail">
-            <h4>${data.title}</h4>
-            <p>${data.artist}</p>
-            <audio controls src="${data.url}"></audio>
-            <div class="controls">
-              <button onclick="editSong('${id}', '${data.title}', '${data.artist}')">✏️ Edit</button>
-              <button onclick="deleteSong('${id}')">🗑️ Delete</button>
+<body class="flex items-center justify-center">
+    <div class="w-full max-w-lg p-6">
+        <!-- Login Section -->
+        <div id="auth-section" class="admin-panel p-6">
+            <h2 class="text-2xl font-bold mb-4">Admin Login</h2>
+            <input id="email" type="email" placeholder="Email" class="w-full p-2 mb-4 bg-gray-700 rounded text-white">
+            <input id="password" type="password" placeholder="Password" class="w-full p-2 mb-4 bg-gray-700 rounded text-white">
+            <div class="flex space-x-4">
+                <button id="login-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Login</button>
+                <button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded hidden">Logout</button>
             </div>
-          `;
-          list.appendChild(div);
+            <p id="auth-error" class="text-red-400 mt-2 hidden"></p>
+        </div>
+
+        <!-- Admin Panel Section -->
+        <div id="admin-panel" class="admin-panel p-6 mt-6 hidden">
+            <h2 class="text-2xl font-bold mb-4">Upload Song</h2>
+            <div class="space-y-4">
+                <input id="song-title" type="text" placeholder="Song Title" class="w-full p-2 bg-gray-700 rounded text-white">
+                <input id="song-artist" type="text" placeholder="Artist Name" class="w-full p-2 bg-gray-700 rounded text-white">
+                <input id="song-file" type="file" accept=".mp3" class="w-full p-2 bg-gray-700 rounded text-white">
+                <input id="song-image" type="file" accept=".jpg,.png" class="w-full p-2 bg-gray-700 rounded text-white">
+                <button id="upload-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Upload Song</button>
+                <p id="upload-status" class="text-green-400 mt-2 hidden"></p>
+                <p id="upload-error" class="text-red-400 mt-2 hidden"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Wait for Firebase scripts to load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof firebase === 'undefined') {
+                console.error('Firebase SDK not loaded. Please check network or script sources.');
+                return;
+            }
+
+            // Firebase Configuration
+            const firebaseConfig = {
+                apiKey: "AIzaSyAOJ4Ye2PmNA9DykjWX4hvFYhjKg0pZuQM",
+                authDomain: "new-wala-app.firebaseapp.com",
+                projectId: "new-wala-app",
+                storageBucket: "new-wala-app.appspot.com",
+                messagingSenderId: "443237566876",
+                appId: "1:443237566876:web:000000000000" // Replace with actual appId from Firebase console
+            };
+
+            // Initialize Firebase
+            try {
+                firebase.initializeApp(firebaseConfig);
+            } catch (error) {
+                console.error('Firebase initialization failed:', error);
+                return;
+            }
+
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+            const storage = firebase.storage();
+
+            // DOM Elements
+            const authSection = document.getElementById('auth-section');
+            const adminPanel = document.getElementById('admin-panel');
+            const loginBtn = document.getElementById('login-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const authError = document.getElementById('auth-error');
+            const songTitle = document.getElementById('song-title');
+            const songArtist = document.getElementById('song-artist');
+            const songFile = document.getElementById('song-file');
+            const songImage = document.getElementById('song-image');
+            const uploadBtn = document.getElementById('upload-btn');
+            const uploadStatus = document.getElementById('upload-status');
+            const uploadError = document.getElementById('upload-error');
+
+            // Authentication
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    if (user.email === 'admin@example.com') {
+                        authSection.classList.add('hidden');
+                        adminPanel.classList.remove('hidden');
+                        logoutBtn.classList.remove('hidden');
+                    } else {
+                        authError.textContent = 'Access denied: Only admin@example.com can access this panel';
+                        authError.classList.remove('hidden');
+                        authSection.classList.remove('hidden');
+                        adminPanel.classList.add('hidden');
+                        logoutBtn.classList.add('hidden');
+                    }
+                } else {
+                    authSection.classList.remove('hidden');
+                    adminPanel.classList.add('hidden');
+                    logoutBtn.classList.add('hidden');
+                }
+            });
+
+            loginBtn.addEventListener('click', () => {
+                const email = emailInput.value;
+                const password = passwordInput.value;
+                auth.signInWithEmailAndPassword(email, password).catch(error => {
+                    authError.textContent = error.message;
+                    authError.classList.remove('hidden');
+                });
+            });
+
+            logoutBtn.addEventListener('click', () => {
+                auth.signOut();
+            });
+
+            // Upload Song
+            uploadBtn.addEventListener('click', async () => {
+                const title = songTitle.value;
+                const artist = songArtist.value;
+                const audioFile = songFile.files[0];
+                const imageFile = songImage.files[0];
+
+                if (!title || !artist || !audioFile) {
+                    uploadError.textContent = 'Please fill all required fields (title, artist, audio file)';
+                    uploadError.classList.remove('hidden');
+                    uploadStatus.classList.add('hidden');
+                    return;
+                }
+
+                try {
+                    // Upload audio file
+                    const audioRef = storage.ref(`songs/${audioFile.name}`);
+                    await audioRef.put(audioFile);
+                    const audioUrl = await audioRef.getDownloadURL();
+
+                    // Upload image file (if provided)
+                    let imageUrl = '';
+                    if (imageFile) {
+                        const imageRef = storage.ref(`images/${imageFile.name}`);
+                        await imageRef.put(imageFile);
+                        imageUrl = await imageRef.getDownloadURL();
+                    }
+
+                    // Save metadata to Firestore
+                    await db.collection('tracks').add({
+                        title,
+                        artist,
+                        url: audioUrl,
+                        image: imageUrl || 'https://via.placeholder.com/150'
+                    });
+
+                    uploadStatus.textContent = 'Song uploaded successfully!';
+                    uploadStatus.classList.remove('hidden');
+                    uploadError.classList.add('hidden');
+                    songTitle.value = '';
+                    songArtist.value = '';
+                    songFile.value = '';
+                    songImage.value = '';
+                } catch (error) {
+                    uploadError.textContent = `Upload failed: ${error.message}`;
+                    uploadError.classList.remove('hidden');
+                    uploadStatus.classList.add('hidden');
+                }
+            });
         });
-      });
-    }
-
-    function deleteSong(id) {
-      if (confirm("Are you sure to delete this song?")) {
-        db.ref("songs/" + id).remove();
-        alert("Deleted successfully.");
-      }
-    }
-
-    function editSong(id, oldTitle, oldArtist) {
-      const newTitle = prompt("Enter new title:", oldTitle);
-      const newArtist = prompt("Enter new artist:", oldArtist);
-      if (newTitle && newArtist) {
-        db.ref("songs/" + id).update({
-          title: newTitle,
-          artist: newArtist
-        });
-        alert("Updated successfully.");
-      }
-    }
-
-    window.onload = loadSongs;
-  </script>
+    </script>
 </body>
 </html>
