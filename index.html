@@ -1,188 +1,349 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Spotify Full Player</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background: #000;
-      color: #fff;
-    }
-    .header {
-      padding: 16px;
-      font-size: 20px;
-      font-weight: bold;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .song-list {
-      padding: 0 16px 100px;
-    }
-    .song-item {
-      display: flex;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid #222;
-      cursor: pointer;
-    }
-    .song-item img {
-      width: 60px;
-      height: 60px;
-      object-fit: cover;
-      border-radius: 6px;
-      margin-right: 12px;
-    }
-    .song-info h3 {
-      margin: 0 0 4px;
-      font-size: 15px;
-    }
-    .song-info p {
-      margin: 0;
-      font-size: 13px;
-      color: #aaa;
-    }
-
-    .player-screen {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: linear-gradient(to bottom, #000 30%, #121212);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      z-index: 100;
-      animation: fadeIn 0.3s ease-in-out;
-    }
-    @keyframes fadeIn {
-      from {opacity: 0;} to {opacity: 1;}
-    }
-    .player-header {
-      width: 100%;
-      padding: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .player-img {
-      width: 280px;
-      height: 280px;
-      margin: 20px;
-      border-radius: 16px;
-      object-fit: cover;
-    }
-    .player-title {
-      font-size: 18px;
-      margin-top: 10px;
-      text-align: center;
-    }
-    .player-artist {
-      font-size: 14px;
-      color: #bbb;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .controls {
-      display: flex;
-      justify-content: space-around;
-      width: 80%;
-      margin-top: 20px;
-      align-items: center;
-    }
-    .controls i {
-      font-size: 24px;
-      cursor: pointer;
-    }
-    audio {
-      width: 90%;
-      margin-top: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Music Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js"></script>
+    <style>
+        body {
+            background: linear-gradient(45deg, #1a202c, #2d3748, #4a5568);
+            background-size: 400%;
+            animation: gradient 15s ease infinite;
+            min-height: 100vh;
+            color: white;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .nav-link:hover {
+            color: #60a5fa;
+            transform: scale(1.1);
+        }
+        .track-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .seek-bar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #3b82f6;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .seek-bar::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #3b82f6;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .volume-bar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #3b82f6;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .volume-bar::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            background: #3b82f6;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+    </style>
 </head>
-<body>
-  <div class="header">
-    Trending Songs
-  </div>
-  <div class="song-list" id="songList"></div>
+<body class="flex items-center justify-center">
+    <div class="w-full max-w-4xl p-6">
+        <!-- Header Section -->
+        <header class="header fixed top-0 w-full max-w-4xl p-4 flex justify-between items-center z-10">
+            <div class="flex items-center space-x-4">
+                <h1 class="text-2xl font-bold">🎵 Premium Music Player</h1>
+                <div class="flex items-center bg-gray-700 rounded-lg">
+                    <input id="search-bar" type="text" placeholder="Search songs..." class="p-2 bg-transparent text-white outline-none">
+                    <button id="search-btn" class="p-2 bg-blue-600 hover:bg-blue-700 rounded-r-lg">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 001.48-4.23 6.5 6.5 0 10-6.5 6.5c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <nav class="flex space-x-6">
+                <a href="#" class="nav-link text-lg hover:text-blue-400 transition-transform">🏠 Home</a>
+                <a href="#" class="nav-link text-lg hover:text-blue-400 transition-transform">📋 Playlist</a>
+                <a href="#" class="nav-link text-lg hover:text-blue-400 transition-transform">👤 Profile</a>
+            </nav>
+            <div id="user-profile" class="hidden flex items-center space-x-2">
+                <span id="user-email" class="text-sm"></span>
+                <button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm">Logout</button>
+            </div>
+        </header>
 
-  <div class="player-screen" id="playerScreen">
-    <div class="player-header">
-      <span onclick="closePlayer()" style="font-size: 24px;">⬇</span>
-      <span style="font-size: 22px;">🎵</span>
+        <!-- Login Section -->
+        <div id="auth-section" class="bg-gray-800 rounded-lg p-6 mt-16">
+            <h2 class="text-2xl font-bold mb-4">Login</h2>
+            <input id="email" type="email" placeholder="Email" class="w-full p-2 mb-4 bg-gray-700 rounded text-white">
+            <input id="password" type="password" placeholder="Password" class="w-full p-2 mb-4 bg-gray-700 rounded text-white">
+            <div class="flex space-x-4">
+                <button id="login-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Login</button>
+                <button id="signup-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Sign Up</button>
+            </div>
+            <p id="auth-error" class="text-red-400 mt-2 hidden"></p>
+        </div>
+
+        <!-- Player Section -->
+        <div id="player-section" class="bg-gray-800 rounded-lg p-6 mt-16 hidden">
+            <div class="flex items-center mb-6">
+                <img id="track-image" src="https://via.placeholder.com/150" alt="Track Image" class="w-24 h-24 rounded-lg mr-4">
+                <div>
+                    <h2 id="track-title" class="text-xl font-semibold">Song Title</h2>
+                    <p id="track-artist" class="text-gray-400">Artist Name</p>
+                </div>
+            </div>
+            <audio id="audio-player" class="hidden"></audio>
+            <div class="flex justify-between mb-4">
+                <button id="prev-btn" class="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-full">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h2v16H6V4zm12 0l-8 8 8 8V4z"/></svg>
+                </button>
+                <button id="play-pause-btn" class="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full">
+                    <svg id="play-icon" class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <svg id="pause-icon" class="w-8 h-8 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
+                </button>
+                <button id="next-btn" class="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-full">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M18 4h-2v16h2V4zm-12 0l8 8-8 8V4z"/></svg>
+                </button>
+            </div>
+            <div class="mb-4">
+                <input id="seek-bar" type="range" min="0" max="100" value="0" class="w-full seek-bar">
+                <div class="flex justify-between text-sm text-gray-400">
+                    <span id="current-time">0:00</span>
+                    <span id="duration">0:00</span>
+                </div>
+            </div>
+            <div class="flex items-center mb-4">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3z"/></svg>
+                <input id="volume-bar" type="range" min="0" max="100" value="100" class="w-24 volume-bar">
+            </div>
+            <div class="mt-6">
+                <h2 class="text-xl font-bold mb-4">Playlist</h2>
+                <ul id="playlist" class="space-y-2"></ul>
+            </div>
+        </div>
     </div>
-    <img id="playerImg" class="player-img" src="" alt="Album">
-    <div class="player-title" id="playerTitle">Song Title</div>
-    <div class="player-artist" id="playerArtist">Artist</div>
-    <audio id="audioPlayer" controls autoplay></audio>
-    <div class="controls">
-      <i onclick="audioPlayer.currentTime -= 10">⏪</i>
-      <i onclick="togglePlayPause()">⏯</i>
-      <i onclick="audioPlayer.currentTime += 10">⏩</i>
-    </div>
-  </div>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAOJ4Ye2PmNA9DykjWX4hvFYhjKg0pZuQM",
-      authDomain: "new-wala-app.firebaseapp.com",
-      databaseURL: "https://new-wala-app-default-rtdb.firebaseio.com",
-      projectId: "new-wala-app",
-      storageBucket: "new-wala-app.appspot.com",
-      messagingSenderId: "443237566876",
-      appId: "1:443237566876:android:c9bc3a6525f3152bf2a059"
-    };
+    <script>
+        // Wait for Firebase scripts to load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof firebase === 'undefined') {
+                console.error('Firebase SDK not loaded. Please check network or script sources.');
+                return;
+            }
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const songList = document.getElementById("songList");
-    const playerScreen = document.getElementById("playerScreen");
-    const audioPlayer = document.getElementById("audioPlayer");
-    const playerTitle = document.getElementById("playerTitle");
-    const playerArtist = document.getElementById("playerArtist");
-    const playerImg = document.getElementById("playerImg");
+            // Firebase Configuration
+            const firebaseConfig = {
+                apiKey: "AIzaSyAOJ4Ye2PmNA9DykjWX4hvFYhjKg0pZuQM",
+                authDomain: "new-wala-app.firebaseapp.com",
+                projectId: "new-wala-app",
+                storageBucket: "new-wala-app.appspot.com",
+                messagingSenderId: "443237566876",
+                appId: "1:443237566876:web:000000000000" // Replace with actual appId from Firebase console
+            };
 
-    db.ref("songs").on("value", function(snapshot) {
-      songList.innerHTML = "";
-      snapshot.forEach(child => {
-        const song = child.val();
-        const div = document.createElement("div");
-        div.className = "song-item";
-        div.innerHTML = `
-          <img src="${song.thumbnail}" />
-          <div class="song-info">
-            <h3>${song.title}</h3>
-            <p>${song.artist}</p>
-          </div>
-        `;
-        div.onclick = () => openPlayer(song);
-        songList.appendChild(div);
-      });
-    });
+            // Initialize Firebase
+            try {
+                firebase.initializeApp(firebaseConfig);
+            } catch (error) {
+                console.error('Firebase initialization failed:', error);
+                return;
+            }
 
-    function openPlayer(song) {
-      playerScreen.style.display = "flex";
-      playerTitle.innerText = song.title;
-      playerArtist.innerText = song.artist;
-      playerImg.src = song.thumbnail;
-      audioPlayer.src = song.url;
-    }
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+            const storage = firebase.storage();
 
-    function closePlayer() {
-      playerScreen.style.display = "none";
-      audioPlayer.pause();
-    }
+            // DOM Elements
+            const audioPlayer = document.getElementById('audio-player');
+            const playPauseBtn = document.getElementById('play-pause-btn');
+            const playIcon = document.getElementById('play-icon');
+            const pauseIcon = document.getElementById('pause-icon');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const seekBar = document.getElementById('seek-bar');
+            const volumeBar = document.getElementById('volume-bar');
+            const currentTime = document.getElementById('current-time');
+            const duration = document.getElementById('duration');
+            const trackTitle = document.getElementById('track-title');
+            const trackArtist = document.getElementById('track-artist');
+            const trackImage = document.getElementById('track-image');
+            const playlist = document.getElementById('playlist');
+            const authSection = document.getElementById('auth-section');
+            const playerSection = document.getElementById('player-section');
+            const loginBtn = document.getElementById('login-btn');
+            const signupBtn = document.getElementById('signup-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const authError = document.getElementById('auth-error');
+            const userProfile = document.getElementById('user-profile');
+            const userEmail = document.getElementById('user-email');
+            const searchBar = document.getElementById('search-bar');
+            const searchBtn = document.getElementById('search-btn');
 
-    function togglePlayPause() {
-      if (audioPlayer.paused) audioPlayer.play();
-      else audioPlayer.pause();
-    }
-  </script>
+            let tracks = [];
+            let currentTrackIndex = 0;
+
+            // Authentication
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    authSection.classList.add('hidden');
+                    playerSection.classList.remove('hidden');
+                    userProfile.classList.remove('hidden');
+                    userEmail.textContent = user.email;
+                    loadPlaylist();
+                } else {
+                    authSection.classList.remove('hidden');
+                    playerSection.classList.add('hidden');
+                    userProfile.classList.add('hidden');
+                }
+            });
+
+            loginBtn.addEventListener('click', () => {
+                const email = emailInput.value;
+                const password = passwordInput.value;
+                auth.signInWithEmailAndPassword(email, password).catch(error => {
+                    authError.textContent = error.message;
+                    authError.classList.remove('hidden');
+                });
+            });
+
+            signupBtn.addEventListener('click', () => {
+                const email = emailInput.value;
+                const password = passwordInput.value;
+                auth.createUserWithEmailAndPassword(email, password).catch(error => {
+                    authError.textContent = error.message;
+                    authError.classList.remove('hidden');
+                });
+            });
+
+            logoutBtn.addEventListener('click', () => {
+                auth.signOut();
+            });
+
+            // Load Playlist
+            async function loadPlaylist(searchTerm = '') {
+                playlist.innerHTML = '';
+                tracks = [];
+                try {
+                    const querySnapshot = await db.collection('tracks').get();
+                    querySnapshot.forEach(doc => {
+                        tracks.push({ id: doc.id, ...doc.data() });
+                    });
+
+ hypothesize
+
+                    const filteredTracks = searchTerm
+                        ? tracks.filter(track => 
+                            track.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            track.artist.toLowerCase().includes(searchTerm.toLowerCase()))
+                        : tracks;
+
+                    filteredTracks.forEach((track, index) => {
+                        const li = document.createElement('li');
+                        li.className = 'track-item p-2 rounded cursor-pointer';
+                        li.textContent = `${track.title} - ${track.artist}`;
+                        li.addEventListener('click', () => playTrack(index));
+                        playlist.appendChild(li);
+                    });
+
+                    if (filteredTracks.length > 0) {
+                        playTrack(0);
+                    }
+                } catch (error) {
+                    console.error('Error loading playlist:', error);
+                }
+            }
+
+            // Search Functionality
+            searchBtn.addEventListener('click', () => {
+                const searchTerm = searchBar.value;
+                loadPlaylist(searchTerm);
+            });
+
+            // Play Track
+            function playTrack(index) {
+                if (index >= 0 && index < tracks.length) {
+                    currentTrackIndex = index;
+                    const track = tracks[index];
+                    audioPlayer.src = track.url;
+                    trackTitle.textContent = track.title;
+                    trackArtist.textContent = track.artist;
+                    trackImage.src = track.image || 'https://via.placeholder.com/150';
+                    audioPlayer.play();
+                    playIcon.classList.add('hidden');
+                    pauseIcon.classList.remove('hidden');
+                }
+            }
+
+            // Player Controls
+            playPauseBtn.addEventListener('click', () => {
+                if (audioPlayer.paused) {
+                    audioPlayer.play();
+                    playIcon.classList.add('hidden');
+                    pauseIcon.classList.remove('hidden');
+                } else {
+                    audioPlayer.pause();
+                    playIcon.classList.remove('hidden');
+                    pauseIcon.classList.add('hidden');
+                }
+            });
+
+            prevBtn.addEventListener('click', () => {
+                playTrack(currentTrackIndex - 1);
+            });
+
+            nextBtn.addEventListener('click', () => {
+                playTrack(currentTrackIndex + 1);
+            });
+
+            audioPlayer.addEventListener('timeupdate', () => {
+                const current = audioPlayer.currentTime;
+                const dur = audioPlayer.duration || 0;
+                seekBar.value = (current / dur) * 100 || 0;
+                currentTime.textContent = formatTime(current);
+                duration.textContent = formatTime(dur);
+            });
+
+            seekBar.addEventListener('input', () => {
+                audioPlayer.currentTime = (seekBar.value / 100) * audioPlayer.duration;
+            });
+
+            volumeBar.addEventListener('input', () => {
+                audioPlayer.volume = volumeBar.value / 100;
+            });
+
+            function formatTime(seconds) {
+                const min = Math.floor(seconds / 60);
+                const sec = Math.floor(seconds % 60);
+                return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+            }
+
+            audioPlayer.addEventListener('ended', () => {
+                playTrack(currentTrackIndex + 1);
+            });
+        });
+    </script>
 </body>
 </html>
