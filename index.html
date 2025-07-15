@@ -2,45 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Spotify Mobile UI Clone</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spotify Full Player</title>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
     body {
       margin: 0;
+      font-family: 'Poppins', sans-serif;
       background: #000;
       color: #fff;
-      font-family: 'Poppins', sans-serif;
     }
     .header {
+      padding: 16px;
+      font-size: 20px;
+      font-weight: bold;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px;
-      font-size: 18px;
-      font-weight: bold;
-    }
-    .header .play-btn {
-      background: #1db954;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: #000;
-      font-size: 22px;
-      border: none;
     }
     .song-list {
-      padding: 0 16px 80px;
+      padding: 0 16px 100px;
     }
     .song-item {
       display: flex;
       align-items: center;
       padding: 12px 0;
       border-bottom: 1px solid #222;
+      cursor: pointer;
     }
     .song-item img {
       width: 60px;
@@ -49,32 +38,95 @@
       border-radius: 6px;
       margin-right: 12px;
     }
-    .song-info {
-      flex: 1;
-    }
     .song-info h3 {
-      font-size: 15px;
       margin: 0 0 4px;
+      font-size: 15px;
     }
     .song-info p {
+      margin: 0;
       font-size: 13px;
       color: #aaa;
-      margin: 0;
     }
-    .more {
+
+    .player-screen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(to bottom, #000 30%, #121212);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      z-index: 100;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0;} to {opacity: 1;}
+    }
+    .player-header {
+      width: 100%;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .player-img {
+      width: 280px;
+      height: 280px;
+      margin: 20px;
+      border-radius: 16px;
+      object-fit: cover;
+    }
+    .player-title {
+      font-size: 18px;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .player-artist {
+      font-size: 14px;
+      color: #bbb;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-around;
+      width: 80%;
+      margin-top: 20px;
+      align-items: center;
+    }
+    .controls i {
       font-size: 24px;
       cursor: pointer;
-      padding-left: 10px;
+    }
+    audio {
+      width: 90%;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <div>Trending Bhojpuri Songs</div>
-    <button class="play-btn">▶</button>
+    Trending Songs
   </div>
-
   <div class="song-list" id="songList"></div>
+
+  <div class="player-screen" id="playerScreen">
+    <div class="player-header">
+      <span onclick="closePlayer()" style="font-size: 24px;">⬇</span>
+      <span style="font-size: 22px;">🎵</span>
+    </div>
+    <img id="playerImg" class="player-img" src="" alt="Album">
+    <div class="player-title" id="playerTitle">Song Title</div>
+    <div class="player-artist" id="playerArtist">Artist</div>
+    <audio id="audioPlayer" controls autoplay></audio>
+    <div class="controls">
+      <i onclick="audioPlayer.currentTime -= 10">⏪</i>
+      <i onclick="togglePlayPause()">⏯</i>
+      <i onclick="audioPlayer.currentTime += 10">⏩</i>
+    </div>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -89,25 +141,48 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const songList = document.getElementById('songList');
+    const songList = document.getElementById("songList");
+    const playerScreen = document.getElementById("playerScreen");
+    const audioPlayer = document.getElementById("audioPlayer");
+    const playerTitle = document.getElementById("playerTitle");
+    const playerArtist = document.getElementById("playerArtist");
+    const playerImg = document.getElementById("playerImg");
 
     db.ref("songs").on("value", function(snapshot) {
       songList.innerHTML = "";
-      snapshot.forEach(function(childSnapshot) {
-        const song = childSnapshot.val();
+      snapshot.forEach(child => {
+        const song = child.val();
         const div = document.createElement("div");
         div.className = "song-item";
         div.innerHTML = `
-          <img src="${song.thumbnail}" alt="Thumbnail">
+          <img src="${song.thumbnail}" />
           <div class="song-info">
             <h3>${song.title}</h3>
             <p>${song.artist}</p>
           </div>
-          <div class="more">⋮</div>
         `;
+        div.onclick = () => openPlayer(song);
         songList.appendChild(div);
       });
     });
+
+    function openPlayer(song) {
+      playerScreen.style.display = "flex";
+      playerTitle.innerText = song.title;
+      playerArtist.innerText = song.artist;
+      playerImg.src = song.thumbnail;
+      audioPlayer.src = song.url;
+    }
+
+    function closePlayer() {
+      playerScreen.style.display = "none";
+      audioPlayer.pause();
+    }
+
+    function togglePlayPause() {
+      if (audioPlayer.paused) audioPlayer.play();
+      else audioPlayer.pause();
+    }
   </script>
 </body>
 </html>
